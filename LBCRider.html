@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LBC Rider</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#CC2027;--red-d:#A01820;--red-l:#FEF0F0;--red-m:rgba(204,32,39,.12);
+  --yellow:#F5A800;--yellow-l:#FEF5E0;
+  --bg:#F2F2F6;--card:#fff;--text:#0E0E12;
+  --muted:#767680;--border:rgba(0,0,0,.08);
+  --green:#0F7F4A;--green-l:#E6F7EE;
+  --ai:#5B35CE;--ai-l:#EDE8FD;--ai-m:rgba(91,53,206,.1);
+  --fuel:#D95A00;--fuel-l:#FEF0E3;
+  --mono:'JetBrains Mono',monospace;
+}
+body{background:#0C0C14;font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px}
+
+/* PHONE SHELL */
+.phone{width:375px;height:820px;background:var(--bg);border-radius:44px;overflow:hidden;border:1.5px solid #1E1E2E;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(255,255,255,.04),0 40px 80px rgba(0,0,0,.7);flex-shrink:0;position:relative}
+.status-bar{background:var(--red);color:white;display:flex;align-items:center;justify-content:space-between;padding:14px 24px 8px;font-size:12px;font-weight:700;flex-shrink:0}
+.status-bar .t{font-size:17px;font-weight:800;font-family:var(--mono)}
+.sig{display:flex;gap:4px;align-items:center}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;height:100%;overflow:hidden}
+.screen.active{display:flex}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:20px}
+.scroll::-webkit-scrollbar{width:0}
+
+/* SYNC STRIP */
+.sync{font-size:11px;font-weight:600;padding:5px 16px;flex-shrink:0;display:flex;align-items:center;gap:6px;justify-content:center;letter-spacing:.2px}
+.sync.on{background:#E4F5ED;color:#07582C}
+.sync.ai{background:var(--ai-l);color:#3B22A0}
+.sync.off{background:var(--yellow-l);color:#7A5200}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* HEADER */
+.hdr{background:var(--red);color:white;padding:10px 18px 14px;flex-shrink:0}
+.hdr-top{display:flex;align-items:center;justify-content:space-between}
+.hdr-greet{font-size:10px;opacity:.65;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:1px}
+.hdr-name{font-size:21px;font-weight:800;letter-spacing:-.4px}
+.hdr-sub{font-size:11px;opacity:.6;margin-top:2px}
+.hdr-title{font-size:17px;font-weight:800}
+.ibtn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.16);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;font-size:15px;transition:background .15s;position:relative}
+.ibtn:hover{background:rgba(255,255,255,.26)}
+.ibtn .notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:#FFD600;border-radius:50%;border:1.5px solid var(--red);display:none}
+.ibtn .notif-dot.show{display:block}
+.backbtn{background:rgba(255,255,255,.16);border:none;color:white;border-radius:20px;padding:6px 13px;font-size:11px;font-weight:700;cursor:pointer;transition:background .15s}
+.backbtn:hover{background:rgba(255,255,255,.26)}
+
+/* BOTTOM NAV */
+.bnav{height:64px;background:white;border-top:.5px solid var(--border);display:flex;align-items:center;flex-shrink:0}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:8px 0;background:none;border:none;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;transition:color .15s}
+.ni:hover,.ni.active{color:var(--red)}
+.nicon{font-size:20px;line-height:1}
+
+/* ══ HOME ══ */
+.next-hero{margin:14px 14px 0;background:var(--red);border-radius:18px;padding:16px 18px;color:white;position:relative;overflow:hidden;cursor:pointer;transition:opacity .15s}
+.next-hero:active{opacity:.9}
+.next-hero::before{content:'';position:absolute;right:-16px;top:-16px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.07)}
+.nh-tag{font-size:10px;font-weight:700;opacity:.65;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.nh-name{font-size:22px;font-weight:800;letter-spacing:-.4px;line-height:1.1}
+.nh-addr{font-size:12px;opacity:.7;margin-top:3px}
+.nh-pills{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.nh-pill{background:rgba(255,255,255,.16);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700}
+
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px 14px 0}
+.sc{background:white;border-radius:14px;padding:12px 10px;border:.5px solid var(--border);text-align:center}
+.sv{font-size:24px;font-weight:800;color:var(--text);line-height:1;letter-spacing:-.5px;font-family:var(--mono)}
+.sl{font-size:9px;color:var(--muted);margin-top:3px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.sc.accent .sv{color:var(--red)}
+.sc.fuel-c .sv{color:var(--fuel)}
+.sc.green-c .sv{color:var(--green)}
+
+.ai-nudge{margin:10px 14px 0;background:var(--ai-l);border-radius:12px;padding:10px 13px;border:.5px solid rgba(91,53,206,.18);display:flex;align-items:center;gap:10px;cursor:pointer}
+.ai-nudge-text{font-size:12px;color:#3B226E;font-weight:600;flex:1;line-height:1.4}
+.ai-nudge-action{font-size:11px;font-weight:800;color:var(--ai);flex-shrink:0}
+
+.sec{padding:12px 14px 0}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.sec-t{font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.8px}
+.see-all{font-size:12px;color:var(--red);font-weight:700;cursor:pointer;background:none;border:none}
+
+/* Home stop list */
+.stop-list{display:flex;flex-direction:column;gap:6px}
+.si{background:white;border-radius:12px;padding:10px 13px;border:.5px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .15s}
+.si:hover{border-color:rgba(204,32,39,.3)}
+.si.active-stop{border-color:var(--red);box-shadow:0 2px 10px rgba(204,32,39,.1)}
+.snum{width:28px;height:28px;border-radius:50%;background:var(--red-l);color:var(--red);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.snum.done{background:var(--green-l);color:var(--green)}
+.snum.go{background:var(--red);color:white}
+.sinfo{flex:1;min-width:0}
+.sname{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saddr{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;flex-shrink:0}
+.b-done{background:var(--green-l);color:#085A30}
+.b-next{background:var(--red-l);color:var(--red)}
+.b-pend{background:var(--bg);color:var(--muted)}
+
+.cta{margin:14px;border-radius:14px;border:none;cursor:pointer;background:var(--red);color:white;font-size:14px;font-weight:800;padding:15px;width:calc(100% - 28px);display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s,transform .1s;letter-spacing:.3px}
+.cta:hover{background:var(--red-d)}
+.cta:active{transform:scale(.98)}
+
+/* ══ ROUTE ══ */
+.map-wrap{height:280px;background:#DDE7F4;flex-shrink:0;position:relative;overflow:hidden;cursor:grab}
+.map-wrap:active{cursor:grabbing}
+.map-canvas{position:absolute;inset:0;width:100%;height:100%;transform-origin:center center;transition:transform .25s ease}
+.map-svg{width:100%;height:100%}
+.map-zoom-controls{position:absolute;bottom:10px;right:10px;display:flex;flex-direction:column;gap:4px;z-index:10}
+.zoom-btn{width:30px;height:30px;background:white;border:none;border-radius:8px;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);color:var(--text);line-height:1;transition:background .1s}
+.zoom-btn:hover{background:var(--red-l);color:var(--red)}
+.map-badge{position:absolute;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:5px 10px;border-radius:20px;z-index:5}
+.map-badge.ai-b{top:10px;left:10px;background:var(--ai);color:white;box-shadow:0 2px 8px rgba(91,53,206,.35)}
+.map-badge.fuel-b{top:10px;right:10px;background:white;color:var(--fuel);border:.5px solid rgba(209,90,0,.2)}
+
+/* Progress bar */
+.rprog{background:white;border-bottom:.5px solid var(--border);padding:11px 16px;flex-shrink:0}
+.prog-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600}
+.prog-row span:last-child{color:var(--red);font-weight:800}
+.prog-track{height:5px;background:#EBEBF0;border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--red),#FF5A60);border-radius:99px;transition:width .6s ease}
+.pstats{display:flex;gap:6px;margin-top:9px}
+.ps{background:var(--bg);border-radius:10px;padding:7px 6px;flex:1;text-align:center}
+.ps-v{font-size:13px;font-weight:800;color:var(--text);font-family:var(--mono)}
+.ps-l{font-size:8px;color:var(--muted);margin-top:1px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.ps.fs{background:var(--fuel-l)}.ps.fs .ps-v{color:var(--fuel)}
+.ps.as{background:var(--ai-l)}.ps.as .ps-v{color:var(--ai)}
+
+/* Offline panel */
+.offline-panel{margin:8px 14px 0;background:var(--yellow-l);border-radius:12px;border:.5px solid rgba(245,168,0,.3);padding:9px 13px;display:flex;align-items:center;gap:10px}
+.offline-panel.synced{background:var(--green-l);border-color:rgba(15,127,74,.2)}
+
+/* AI suggestion */
+.ai-sugg{margin:8px 14px 0;background:var(--ai-l);border-radius:14px;padding:11px 14px;border:.5px solid rgba(91,53,206,.2)}
+.as-hdr{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.as-label{font-size:11px;font-weight:800;color:var(--ai)}
+.live-chip{margin-left:auto;background:var(--ai);color:white;font-size:8px;font-weight:800;padding:2px 7px;border-radius:10px;letter-spacing:1px}
+.as-body{font-size:12px;color:#3B226E;line-height:1.5}
+.as-actions{display:flex;gap:7px;margin-top:9px}
+.as-btn{flex:1;border-radius:10px;border:none;cursor:pointer;padding:8px;font-size:11px;font-weight:800;transition:all .15s}
+.as-btn.accept{background:var(--ai);color:white}
+.as-btn.accept:hover{background:#4A2CB0}
+.as-btn.dismiss{background:var(--ai-m);color:var(--ai)}
+
+/* Route stop list */
+.rstops{display:flex;flex-direction:column;padding:2px 14px 0}
+.rstop{display:flex;gap:10px;align-items:flex-start;padding:10px 4px;cursor:pointer;border-radius:10px;transition:background .1s}
+.rstop:hover{background:rgba(204,32,39,.03)}
+.rline{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.rdot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800}
+.rdot.done{background:var(--green);color:white}
+.rdot.active{background:var(--red);color:white}
+.rdot.next{background:#E0E0E6;color:var(--muted)}
+.rconn{width:2px;flex:1;min-height:12px;background:#E4E4EC;margin:3px 0}
+.rconn.done{background:var(--green);opacity:.3}
+.rs-info{flex:1}
+.rs-name{font-size:13px;font-weight:700;color:var(--text)}
+.rs-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.rs-fuel{font-size:10px;color:var(--fuel);font-weight:600;margin-top:2px;font-family:var(--mono)}
+.eta-done{color:var(--green);font-size:11px;font-weight:700;margin-top:2px}
+.eta-go{color:var(--red);font-size:11px;font-weight:700;margin-top:2px}
+.eta-wait{color:var(--muted);font-size:11px;margin-top:2px}
+.route-sec-hdr{padding:8px 14px 2px;font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.8px}
+
+/* ══ PARCEL LIST ══ */
+.parcel-filter{display:flex;gap:6px;padding:10px 14px;overflow-x:auto;flex-shrink:0}
+.parcel-filter::-webkit-scrollbar{display:none}
+.pf-chip{background:white;border:.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.pf-chip.active{background:var(--red);color:white;border-color:var(--red)}
+
+.parcel-list{display:flex;flex-direction:column;gap:0;padding:0 14px}
+.parcel-row{background:white;border-radius:12px;padding:12px 14px;border:.5px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s,box-shadow .15s;margin-bottom:6px}
+.parcel-row:hover{border-color:rgba(204,32,39,.25);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.parcel-row.active-parcel{border-color:var(--red);box-shadow:0 2px 10px rgba(204,32,39,.12)}
+.pr-icon{width:38px;height:38px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.pr-icon.cod{background:var(--green-l)}
+.pr-icon.std{background:var(--red-l)}
+.pr-info{flex:1;min-width:0}
+.pr-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-track{font-size:10px;color:var(--muted);margin-top:1px;font-family:var(--mono)}
+.pr-addr{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.pr-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px}
+.pr-eta{font-size:10px;color:var(--muted);font-weight:600}
+.pr-cod{font-size:11px;font-weight:800;color:var(--green)}
+
+/* ══ PARCEL DETAIL ══ */
+.pd-header{background:white;margin:12px 14px 0;border-radius:14px;border:.5px solid var(--border);overflow:hidden}
+.pd-top{padding:14px 14px 12px;border-bottom:.5px solid var(--border)}
+.pd-track{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-family:var(--mono)}
+.pd-pkg{font-size:17px;font-weight:800;color:var(--text);margin-top:3px}
+.pd-status-row{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.pd-status{background:var(--red-l);color:var(--red);font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px}
+.pd-cod{font-size:13px;font-weight:800;color:var(--green)}
+
+.info-sec{background:white;margin:8px 14px 0;border-radius:14px;border:.5px solid var(--border);overflow:hidden}
+.info-row{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 14px;gap:10px}
+.info-row+.info-row{border-top:.5px solid var(--border)}
+.info-row.ai-row{background:var(--ai-l)}
+.info-row.fuel-row{background:var(--fuel-l)}
+.il{font-size:11px;color:var(--muted);flex-shrink:0;font-weight:600}
+.iv{font-size:12px;font-weight:800;color:var(--text);text-align:right}
+
+/* Action buttons */
+.action-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:10px 14px 0}
+.act-btn{border-radius:12px;border:.5px solid var(--border);background:white;padding:11px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:800;color:var(--text);transition:border-color .15s,background .15s}
+.act-btn:hover{border-color:var(--red);background:var(--red-l);color:var(--red)}
+.act-icon{font-size:20px}
+.act-btn.muted{color:var(--muted)}
+.deliver-wrap{padding:8px 14px 0}
+.deliver-btn{width:100%;border-radius:14px;border:none;cursor:pointer;background:var(--red);color:white;font-size:14px;font-weight:800;padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s,transform .1s}
+.deliver-btn:hover{background:var(--red-d)}
+.deliver-btn:active{transform:scale(.98)}
+
+/* ══ FUEL LOG ══ */
+.fbar-wrap{display:flex;flex-direction:column;gap:0}
+.fbar-row{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.fbar-lbl{font-size:10px;color:var(--muted);width:30px;text-align:right;flex-shrink:0;font-weight:700;font-family:var(--mono)}
+.fbar-track{flex:1;height:7px;background:#F0F0F6;border-radius:99px;overflow:hidden}
+.fbar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--fuel),#FF8C40);animation:grow .8s ease-out backwards}
+.fbar-fill.saved{background:linear-gradient(90deg,var(--green),#40C87A)}
+@keyframes grow{from{width:0 !important}}
+.fbar-val{font-size:10px;font-weight:800;color:var(--text);width:36px;flex-shrink:0;font-family:var(--mono)}
+
+@keyframes dashMove{to{stroke-dashoffset:-24}}
+
+/* ══ OVERLAYS & MODALS ══ */
+/* Notification panel */
+.notif-panel{position:absolute;top:0;left:0;right:0;background:white;z-index:300;border-radius:0 0 22px 22px;box-shadow:0 12px 32px rgba(0,0,0,.18);transform:translateY(-110%);transition:transform .32s cubic-bezier(.32,.72,0,1);overflow:hidden}
+.notif-panel.open{transform:translateY(0)}
+.notif-hdr{background:var(--red);color:white;padding:54px 18px 14px;display:flex;align-items:center;justify-content:space-between}
+.notif-hdr-title{font-size:16px;font-weight:800}
+.notif-close{background:rgba(255,255,255,.2);border:none;color:white;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.notif-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:.5px solid var(--border);cursor:pointer;transition:background .12s}
+.notif-item:hover{background:var(--bg)}
+.notif-item:last-child{border-bottom:none}
+.notif-icon{font-size:22px;flex-shrink:0;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.notif-body{flex:1}
+.notif-title{font-size:12px;font-weight:800;color:var(--text);margin-bottom:2px}
+.notif-desc{font-size:11px;color:var(--muted);line-height:1.45}
+.notif-time{font-size:10px;color:var(--muted);font-weight:600;flex-shrink:0;margin-top:1px}
+.notif-unread{width:8px;height:8px;background:var(--red);border-radius:50%;flex-shrink:0;margin-top:4px}
+
+/* Modal bottom sheet */
+.modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:400;display:none;align-items:flex-end;border-radius:44px;overflow:hidden}
+.modal-overlay.open{display:flex}
+.modal-sheet{width:100%;background:white;border-radius:22px 22px 0 0;overflow:hidden;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1)}
+.modal-sheet.open{transform:translateY(0)}
+.modal-drag{width:36px;height:4px;background:rgba(0,0,0,.12);border-radius:2px;margin:10px auto 0}
+.modal-content{padding:12px 18px 28px;max-height:62vh;overflow-y:auto}
+
+/* Call overlay */
+.call-overlay{position:absolute;inset:0;background:linear-gradient(180deg,#1A0A3A 0%,#0D0D1E 100%);z-index:500;border-radius:44px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.call-overlay.open{display:flex}
+.call-avatar{width:86px;height:86px;border-radius:50%;background:var(--ai);display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:20px;box-shadow:0 0 0 0 rgba(91,53,206,.4);animation:pulse-ring 2.2s ease-out infinite}
+@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(91,53,206,.5)}70%{box-shadow:0 0 0 24px rgba(91,53,206,0)}100%{box-shadow:0 0 0 0 rgba(91,53,206,0)}}
+.call-name-big{font-size:26px;font-weight:800;color:white;margin-bottom:6px;text-align:center}
+.call-phone-lbl{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:8px}
+.call-status-lbl{font-size:13px;color:rgba(255,255,255,.7);font-weight:600;margin-bottom:4px}
+.call-timer-lbl{font-size:18px;color:white;font-weight:800;font-family:var(--mono);margin-bottom:40px;min-height:26px}
+.call-actions{display:flex;gap:28px;align-items:center}
+.call-btn{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;transition:transform .1s;flex-direction:column;gap:2px}
+.call-btn:active{transform:scale(.92)}
+.call-btn-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.55);margin-top:6px;text-align:center}
+.call-end{background:#CC2027;width:64px;height:64px;font-size:26px}
+
+/* Search overlay */
+.search-overlay{position:absolute;inset:0;background:white;z-index:350;border-radius:44px;display:none;flex-direction:column}
+.search-overlay.open{display:flex}
+.search-hdr{background:var(--red);padding:50px 16px 14px;display:flex;align-items:center;gap:10px}
+.search-input-wrap{flex:1;background:rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;gap:8px;padding:9px 12px}
+.search-input-wrap input{background:none;border:none;outline:none;color:white;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600;flex:1;width:0}
+.search-input-wrap input::placeholder{color:rgba(255,255,255,.55)}
+.search-cancel{color:white;font-size:12px;font-weight:700;background:none;border:none;cursor:pointer;flex-shrink:0;opacity:.8}
+.search-results{flex:1;overflow-y:auto;padding:10px 14px}
+.search-empty{text-align:center;padding:40px 0;color:var(--muted)}
+
+/* Toast notification */
+.toast{position:absolute;top:80px;left:14px;right:14px;background:#0E0E12;color:white;border-radius:12px;padding:11px 14px;font-size:12px;font-weight:700;z-index:600;display:flex;align-items:center;gap:8px;box-shadow:0 6px 20px rgba(0,0,0,.3);transform:translateY(-20px);opacity:0;transition:all .28s cubic-bezier(.32,.72,0,1)}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* Modal btn helper */
+.m-btn{width:100%;border:none;border-radius:12px;padding:13px;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s}
+.m-btn:active{opacity:.85}
+.m-btn.red{background:var(--red);color:white}
+.m-btn.green{background:var(--green);color:white}
+.m-btn.ai{background:var(--ai);color:white}
+.m-btn.ghost{background:var(--bg);color:var(--text)}
+.m-title{font-size:15px;font-weight:800;color:var(--text);margin-bottom:4px}
+.m-sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.4}
+.m-section{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:14px 0 7px}
+.m-card{background:var(--bg);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.m-option{background:white;border:1.5px solid var(--border);border-radius:10px;padding:11px 12px;cursor:pointer;transition:all .15s;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.m-option:hover{border-color:var(--red);background:var(--red-l)}
+.m-option.selected{border-color:var(--ai);background:var(--ai-l)}
+.m-divider{height:.5px;background:var(--border);margin:12px 0}
+
+/* ══ MORE TRAY ══ */
+.more-tray{position:absolute;bottom:0;left:0;right:0;z-index:200;background:white;border-radius:22px 22px 0 0;box-shadow:0 -8px 32px rgba(0,0,0,.16);transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1)}
+.more-tray.open{transform:translateY(0)}
+.more-tray-drag{width:36px;height:4px;background:rgba(0,0,0,.12);border-radius:2px;margin:10px auto 6px}
+.more-tray-bg{position:absolute;inset:0;z-index:199;display:none;background:rgba(0,0,0,.4);border-radius:44px}
+.more-tray-bg.open{display:block}
+.more-item{display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;transition:background .12s}
+.more-item:hover{background:var(--bg)}
+.more-item-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.more-item-info{flex:1}
+.more-item-title{font-size:14px;font-weight:800;color:var(--text)}
+.more-item-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.more-item-arrow{font-size:14px;color:var(--muted)}
+
+/* ══ PROFILE ══ */
+.profile-card{margin:14px 14px 0;background:var(--red);border-radius:18px;padding:18px;color:white;position:relative;overflow:hidden}
+.profile-card::before{content:'';position:absolute;right:-20px;top:-20px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.06)}
+.profile-avatar{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:white;letter-spacing:-.5px;margin-bottom:10px}
+.profile-name{font-size:20px;font-weight:800;letter-spacing:-.4px}
+.profile-meta{font-size:11px;opacity:.65;margin-top:2px}
+.profile-id{font-size:10px;opacity:.5;font-family:var(--mono);margin-top:1px;letter-spacing:.5px}
+.shift-row{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.shift-pill{padding:5px 12px;border-radius:20px;font-size:10px;font-weight:800;cursor:pointer;transition:all .15s;border:1.5px solid transparent}
+.shift-pill.avail{background:rgba(255,255,255,.18);color:white}
+.shift-pill.active-shift{background:white;color:var(--red)}
+.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px 0}
+.pstat{background:white;border-radius:14px;padding:12px 13px;border:.5px solid var(--border)}
+.pstat-val{font-size:22px;font-weight:800;color:var(--text);font-family:var(--mono);letter-spacing:-.5px}
+.pstat-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-top:3px}
+.pstat.accent .pstat-val{color:var(--red)}
+.pstat.green-v .pstat-val{color:var(--green)}
+.pstat.fuel-v .pstat-val{color:var(--fuel)}
+.pstat.ai-v .pstat-val{color:var(--ai)}
+.perf-card{margin:10px 14px 0;background:white;border-radius:14px;border:.5px solid var(--border);padding:13px 14px}
+.perf-row{margin-bottom:10px}
+.perf-row:last-child{margin-bottom:0}
+.perf-lbl-row{display:flex;justify-content:space-between;margin-bottom:5px}
+.perf-lbl{font-size:11px;font-weight:700;color:var(--text)}
+.perf-pct{font-size:11px;font-weight:800;color:var(--red)}
+.perf-track{height:7px;background:#EBEBF0;border-radius:99px;overflow:hidden}
+.perf-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--red),#FF5A60)}
+.perf-fill.green{background:linear-gradient(90deg,var(--green),#40C87A)}
+
+/* ══ REPORT ══ */
+.report-type-screen{display:none;flex-direction:column;height:100%}
+.report-type-screen.active{display:flex}
+.rtype-card{margin:0 14px 10px;border-radius:18px;border:2px solid var(--border);padding:18px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px}
+.rtype-card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.rtype-card.sr{border-color:rgba(91,53,206,.2);background:var(--ai-l)}
+.rtype-card.inc{border-color:rgba(204,32,39,.2);background:var(--red-l)}
+.rtype-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.rtype-icon.sr{background:var(--ai)}
+.rtype-icon.inc{background:var(--red)}
+.rtype-title{font-size:15px;font-weight:800;color:var(--text)}
+.rtype-sub{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+
+.rform-wrap{display:none;flex-direction:column;height:100%;overflow:hidden}
+.rform-wrap.active{display:flex}
+.rfield{margin-bottom:12px}
+.rfield-lbl{font-size:11px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.rfield select,.rfield textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:white;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.rfield select:focus,.rfield textarea:focus{border-color:var(--red)}
+.rfield textarea{resize:none;min-height:72px;line-height:1.5}
+.rpriority-row{display:flex;gap:6px}
+.rprio{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:8px 6px;text-align:center;cursor:pointer;transition:all .15s}
+.rprio:hover{border-color:var(--red)}
+.rprio.selected-p{border-color:var(--red);background:var(--red-l)}
+.rprio.selected-p .rprio-label{color:var(--red)}
+.rprio-badge{font-size:11px;font-weight:800;color:var(--muted)}
+.rprio-label{font-size:9px;color:var(--muted);font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
+.photo-sim{width:100%;border:1.5px dashed var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;background:var(--bg);transition:all .15s}
+.photo-sim:hover{border-color:var(--red);background:var(--red-l)}
+.photo-sim.captured{border-style:solid;border-color:var(--green);background:var(--green-l)}
+
+/* Ticket chips */
+.ticket-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800}
+.tc-open{background:var(--red-l);color:var(--red)}
+.tc-progress{background:var(--yellow-l);color:#7A5200}
+.tc-resolved{background:var(--green-l);color:#085A30}
+.ticket-row{background:white;border-radius:12px;border:.5px solid var(--border);padding:11px 13px;margin-bottom:6px;cursor:pointer;transition:border-color .15s}
+.ticket-row:hover{border-color:var(--red)}
+.ticket-id{font-size:10px;font-weight:800;color:var(--muted);font-family:var(--mono);margin-bottom:2px}
+.ticket-title{font-size:13px;font-weight:700;color:var(--text)}
+.ticket-meta{font-size:10px;color:var(--muted);margin-top:2px}
+</style>
+</head>
+<body>
+
+<div class="phone" id="phone-rider">
+  <div class="status-bar">
+    <span class="t" id="live-clock">9:41</span>
+    <div class="sig">
+      <svg width="15" height="11" viewBox="0 0 15 11" fill="white"><rect x="0" y="5" width="2.5" height="6" rx=".8"/><rect x="4" y="3.5" width="2.5" height="7.5" rx=".8"/><rect x="8" y="1.5" width="2.5" height="9.5" rx=".8"/><rect x="12" y="0" width="2.5" height="11" rx=".8"/></svg>
+      <svg width="14" height="11" viewBox="0 0 14 11" fill="white"><path d="M7 2.5C9 2.5 10.8 3.4 12 4.9L13.3 3.6C11.7 1.8 9.5.7 7 .7S2.3 1.8.7 3.6L2 4.9C3.2 3.4 5 2.5 7 2.5z"/><path d="M7 5.5c1.3 0 2.5.6 3.3 1.5l1.3-1.3C10.2 4.3 8.7 3.7 7 3.7S3.8 4.3 2.4 5.7l1.3 1.3C4.5 6.1 5.7 5.5 7 5.5z"/><circle cx="7" cy="9.5" r="1.8"/></svg>
+      <svg width="22" height="11" viewBox="0 0 22 11" fill="none"><rect x=".5" y=".5" width="18" height="10" rx="2.5" stroke="white"/><rect x="19.5" y="3.5" width="2" height="4" rx="1" fill="white"/><rect x="2" y="2" width="14" height="7" rx="1.5" fill="white"/></svg>
+    </div>
+  </div>
+
+  <!-- ══════════ HOME ══════════ -->
+  <div id="r-home" class="screen active">
+    <div class="hdr">
+      <div class="hdr-top">
+        <div>
+          <div class="hdr-greet">Good morning</div>
+          <div class="hdr-name">Juan dela Cruz</div>
+          <div class="hdr-sub">Thu, May 21 · Caloocan District</div>
+        </div>
+        <button class="ibtn" onclick="openNotifPanel()">🔔<span class="notif-dot show" id="notif-dot"></span></button>
+      </div>
+    </div>
+    <div class="sync on"><span class="dot"></span>Online · Route synced</div>
+    <div class="scroll">
+
+      <!-- NEXT STOP HERO -->
+      <div class="next-hero" onclick="openParcelDetail(2)">
+        <div class="nh-tag">Next Stop · 2 of 12</div>
+        <div class="nh-name">Pedro Reyes</div>
+        <div class="nh-addr">78 Gen. Luna St, Malabon · 4.2km away</div>
+        <div class="nh-pills">
+          <div class="nh-pill">⏱ ~12 min</div>
+          <div class="nh-pill">₱1,250 COD</div>
+        </div>
+      </div>
+
+      <!-- 3 KEY STATS -->
+      <div class="stats-row">
+        <div class="sc accent"><div class="sv" id="home-stops-left">8</div><div class="sl">Stops Left</div></div>
+        <div class="sc fuel-c"><div class="sv" id="home-fuel-saved">₱94</div><div class="sl">Fuel Saved</div></div>
+        <div class="sc green-c"><div class="sv">6:30</div><div class="sl">ETA Done</div></div>
+      </div>
+
+      <!-- AI NUDGE -->
+      <div class="ai-nudge" onclick="rShow('route')">
+        <span style="font-size:17px">🤖</span>
+        <span class="ai-nudge-text">AI found a faster route — saves 14 min &amp; ₱23</span>
+        <span class="ai-nudge-action">View →</span>
+      </div>
+
+      <!-- STOPS PREVIEW -->
+      <div class="sec">
+        <div class="sec-hdr">
+          <span class="sec-t">Today's Stops</span>
+          <button class="see-all" onclick="rShow('route')">Full route →</button>
+        </div>
+        <div class="stop-list">
+          <div class="si" onclick="openParcelDetail(1)">
+            <div class="snum done">✓</div>
+            <div class="sinfo">
+              <div class="sname">Maria Santos</div>
+              <div class="saddr">124 Rizal Ave, Caloocan</div>
+            </div>
+            <span class="badge b-done">Done</span>
+          </div>
+          <div class="si active-stop" onclick="openParcelDetail(2)">
+            <div class="snum go">2</div>
+            <div class="sinfo">
+              <div class="sname">Pedro Reyes</div>
+              <div class="saddr">78 Gen. Luna St, Malabon</div>
+            </div>
+            <span class="badge b-next">Next</span>
+          </div>
+          <div class="si" onclick="openParcelDetail(3)">
+            <div class="snum">3</div>
+            <div class="sinfo">
+              <div class="sname">Ana Garcia</div>
+              <div class="saddr">45 Quezon Ave, QC</div>
+            </div>
+            <span class="badge b-pend">3:00 PM</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="cta" onclick="rShow('route')">
+        <span style="font-size:18px">🏍</span> Start Route
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════ ROUTE ══════════ -->
+  <div id="r-route" class="screen">
+    <div class="hdr">
+      <div class="hdr-top">
+        <div>
+          <div class="hdr-title">AI-Optimized Route</div>
+          <div class="hdr-sub">Caloocan → Malabon → QC → Bulacan</div>
+        </div>
+        <button class="backbtn" onclick="rShow('home')">← Back</button>
+      </div>
+    </div>
+    <div id="route-offline-bar" style="background:#1A1A2E;color:rgba(255,255,255,.8);font-size:11px;font-weight:600;text-align:center;padding:5px 14px;flex-shrink:0;display:none;">📴 Offline · Using cached route</div>
+
+    <!-- ZOOMABLE MAP -->
+    <div class="map-wrap" id="map-wrap">
+      <div class="map-canvas" id="map-canvas">
+        <svg class="map-svg" viewBox="0 0 375 280" xmlns="http://www.w3.org/2000/svg">
+          <rect width="375" height="280" fill="#DDE7F4"/>
+          <rect x="10" y="10" width="50" height="38" rx="3" fill="#C8D6E8" opacity=".6"/>
+          <rect x="70" y="10" width="38" height="32" rx="3" fill="#C8D6E8" opacity=".5"/>
+          <rect x="10" y="110" width="48" height="42" rx="3" fill="#C8D6E8" opacity=".6"/>
+          <rect x="10" y="200" width="55" height="38" rx="3" fill="#C8D6E8" opacity=".5"/>
+          <rect x="200" y="10" width="58" height="36" rx="3" fill="#C8D6E8" opacity=".5"/>
+          <rect x="295" y="10" width="70" height="52" rx="3" fill="#C8D6E8" opacity=".5"/>
+          <rect x="200" y="105" width="52" height="46" rx="3" fill="#C8D6E8" opacity=".55"/>
+          <rect x="295" y="110" width="72" height="50" rx="3" fill="#C8D6E8" opacity=".5"/>
+          <rect x="130" y="190" width="55" height="40" rx="3" fill="#C8D6E8" opacity=".5"/>
+          <rect x="220" y="195" width="60" height="38" rx="3" fill="#C8D6E8" opacity=".5"/>
+          <rect x="10" y="240" width="100" height="35" rx="3" fill="#C8D6E8" opacity=".45"/>
+          <rect x="0" y="65" width="375" height="17" fill="#F0F4FF"/>
+          <rect x="0" y="160" width="375" height="14" fill="#F0F4FF"/>
+          <rect x="0" y="238" width="375" height="12" fill="#F0F4FF"/>
+          <rect x="115" y="0" width="15" height="280" fill="#F0F4FF"/>
+          <rect x="255" y="0" width="17" height="280" fill="#F0F4FF"/>
+          <rect x="55" y="0" width="8" height="280" fill="#EEF2FC" opacity=".7"/>
+          <rect x="185" y="0" width="8" height="280" fill="#EEF2FC" opacity=".7"/>
+          <text x="63" y="60" font-size="7" fill="#9AABC5" font-weight="700" letter-spacing=".5">RIZAL AVE</text>
+          <text x="125" y="60" font-size="7" fill="#9AABC5" font-weight="700" letter-spacing=".5">C-4 ROAD</text>
+          <text x="125" y="155" font-size="7" fill="#9AABC5" font-weight="700" letter-spacing=".5">GEN. LUNA</text>
+          <polyline points="35,255 35,72 122,72" stroke="#0F7F4A" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+          <polyline points="122,72 200,72 263,72 263,115 320,115 354,162" stroke="#5B35CE" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-dasharray="10 6" style="animation:dashMove 1.5s linear infinite"/>
+          <polyline points="122,72 185,72 185,162 263,162" stroke="#CC2027" stroke-width="1.5" fill="none" stroke-dasharray="4 4" opacity=".2"/>
+          <circle cx="35" cy="255" r="12" fill="#0F7F4A"/>
+          <text x="35" y="259" text-anchor="middle" fill="white" font-size="9" font-weight="800">✓</text>
+          <circle cx="122" cy="72" r="16" fill="rgba(204,32,39,.15)"><animate attributeName="r" values="11;18;11" dur="2s" repeatCount="indefinite"/></circle>
+          <circle cx="122" cy="72" r="11" fill="#CC2027"/>
+          <text x="122" y="76" text-anchor="middle" fill="white" font-size="9" font-weight="800">2</text>
+          <circle cx="263" cy="72" r="10" fill="#5B35CE" opacity=".85"/>
+          <text x="263" y="76" text-anchor="middle" fill="white" font-size="9" font-weight="800">3</text>
+          <circle cx="320" cy="115" r="10" fill="#5B35CE" opacity=".65"/>
+          <text x="320" y="119" text-anchor="middle" fill="white" font-size="9" font-weight="800">4</text>
+          <circle cx="354" cy="162" r="10" fill="#5B35CE" opacity=".45"/>
+          <text x="354" y="166" text-anchor="middle" fill="white" font-size="9" font-weight="800">5</text>
+          <circle cx="75" cy="72" r="12" fill="#CC2027" stroke="white" stroke-width="2.5"/>
+          <text x="75" y="76" text-anchor="middle" fill="white" font-size="11">🏍</text>
+          <rect x="180" y="63" width="68" height="15" rx="3" fill="rgba(245,168,0,.35)"/>
+          <text x="214" y="73" text-anchor="middle" fill="#7A5200" font-size="8" font-weight="800">⚠ TRAFFIC</text>
+          <text x="38" y="215" font-size="8" fill="#0F7F4A" font-weight="800" opacity=".8">Completed</text>
+          <text x="160" y="90" font-size="8" fill="#5B35CE" font-weight="800" opacity=".9">AI Route →</text>
+        </svg>
+      </div>
+      <div class="map-badge ai-b">🤖 AI Route Active</div>
+      <div class="map-badge fuel-b">⛽ <span id="map-saved">₱94.62</span> saved</div>
+      <div class="map-zoom-controls">
+        <button class="zoom-btn" onclick="zoomMap(1)">+</button>
+        <button class="zoom-btn" onclick="zoomMap(-1)">−</button>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <!-- Progress -->
+      <div class="rprog">
+        <div class="prog-row"><span>Route Progress</span><span id="route-prog-label">4 / 12 stops</span></div>
+        <div class="prog-track"><div class="prog-fill" id="route-prog-fill" style="width:33%"></div></div>
+        <div class="pstats">
+          <div class="ps"><div class="ps-v">18km</div><div class="ps-l">Remaining</div></div>
+          <div class="ps fs"><div class="ps-v" id="route-fuel-val">₱94</div><div class="ps-l">Fuel Saved</div></div>
+          <div class="ps as"><div class="ps-v">8.3km</div><div class="ps-l">AI Shorter</div></div>
+          <div class="ps"><div class="ps-v">6:30</div><div class="ps-l">ETA Done</div></div>
+        </div>
+      </div>
+
+      <!-- Offline indicator -->
+      <div style="padding:8px 14px 0">
+        <div class="offline-panel synced" id="offline-panel">
+          <span style="font-size:17px;flex-shrink:0;">📥</span>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:800;color:#085A30;">Offline Ready</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px;">12 stops cached · <span id="sync-time">2 min ago</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI suggestion -->
+      <div class="ai-sugg" id="ai-sugg-card">
+        <div class="as-hdr">
+          <span style="font-size:16px">🤖</span>
+          <span class="as-label">AI Route Suggestion</span>
+          <span class="live-chip">LIVE</span>
+        </div>
+        <div class="as-body">Traffic on C-4 Road. Re-routing via Bagong Barrio Ave saves <strong>2.1km</strong> and <strong>₱23.94</strong> in fuel. ETA improves <strong>14 min</strong>.</div>
+        <div class="as-actions">
+          <button class="as-btn accept" onclick="acceptRoute(this)">✓ Accept New Route</button>
+          <button class="as-btn dismiss" onclick="document.getElementById('ai-sugg-card').style.display='none'">Dismiss</button>
+        </div>
+      </div>
+
+      <!-- Stop list -->
+      <div class="route-sec-hdr">All Stops</div>
+      <div class="rstops">
+        <div class="rstop" onclick="openParcelDetail(1)">
+          <div class="rline"><div class="rdot done">✓</div><div class="rconn done"></div></div>
+          <div class="rs-info">
+            <div class="rs-name">1 · Maria Santos</div>
+            <div class="rs-sub">124 Rizal Ave, Caloocan</div>
+            <div class="rs-fuel">⛽ 0.41L used · ₱46.74</div>
+            <div class="eta-done">✓ Delivered 8:45 AM</div>
+          </div>
+          <span class="badge b-done">Done</span>
+        </div>
+        <div class="rstop" style="background:rgba(204,32,39,.03)" onclick="openParcelDetail(2)">
+          <div class="rline"><div class="rdot active">2</div><div class="rconn"></div></div>
+          <div class="rs-info">
+            <div class="rs-name">2 · Pedro Reyes</div>
+            <div class="rs-sub">78 Gen. Luna St, Malabon</div>
+            <div class="rs-fuel">⛽ ~0.35L est. · ₱39.90</div>
+            <div class="eta-go">● On the way · ~12 min</div>
+          </div>
+          <span class="badge b-next">Next</span>
+        </div>
+        <div class="rstop" onclick="openParcelDetail(3)">
+          <div class="rline"><div class="rdot next">3</div><div class="rconn"></div></div>
+          <div class="rs-info">
+            <div class="rs-name">3 · Ana Garcia</div>
+            <div class="rs-sub">45 Quezon Ave, QC</div>
+            <div class="rs-fuel">⛽ ~0.62L est. · ₱70.68</div>
+            <div class="eta-wait">ETA 3:00 PM</div>
+          </div>
+          <span class="badge b-pend">3:00 PM</span>
+        </div>
+        <div class="rstop" onclick="openParcelDetail(4)">
+          <div class="rline"><div class="rdot next">4</div><div class="rconn"></div></div>
+          <div class="rs-info">
+            <div class="rs-name">4 · Lito Mendoza</div>
+            <div class="rs-sub">12 Bonifacio St, Bulacan</div>
+            <div class="rs-fuel">⛽ ~0.89L est. · ₱101.46</div>
+            <div class="eta-wait">ETA 4:30 PM</div>
+          </div>
+          <span class="badge b-pend">4:30 PM</span>
+        </div>
+        <div class="rstop" onclick="openParcelDetail(5)">
+          <div class="rline"><div class="rdot next">5</div></div>
+          <div class="rs-info">
+            <div class="rs-name">5 · Rosa Villanueva</div>
+            <div class="rs-sub">99 Magsaysay Blvd, Bulacan</div>
+            <div class="rs-fuel">⛽ ~1.02L est. · ₱116.28</div>
+            <div class="eta-wait">ETA 5:15 PM</div>
+          </div>
+          <span class="badge b-pend">5:15 PM</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PARCEL LIST ══════════ -->
+  <div id="r-parcel" class="screen">
+    <div class="hdr">
+      <div class="hdr-top">
+        <div><div class="hdr-title">My Parcels</div><div class="hdr-sub" id="parcel-list-sub">12 deliveries · May 21</div></div>
+        <button class="ibtn" onclick="openSearchUI()">🔍</button>
+      </div>
+    </div>
+    <div class="sync on"><span class="dot"></span>All parcels synced · Offline ready</div>
+
+    <!-- Filter chips -->
+    <div class="parcel-filter">
+      <div class="pf-chip active" onclick="filterParcels('all',this)">All (7)</div>
+      <div class="pf-chip" onclick="filterParcels('pending',this)">Pending (6)</div>
+      <div class="pf-chip" onclick="filterParcels('cod',this)">COD (3)</div>
+      <div class="pf-chip" onclick="filterParcels('done',this)">Done (1)</div>
+    </div>
+
+    <div class="scroll">
+      <div class="parcel-list">
+
+        <div class="parcel-row" data-id="1" data-status="done" data-cod="false" onclick="openParcelDetail(1)">
+          <div class="pr-icon"><span style="font-size:18px">✅</span></div>
+          <div class="pr-info">
+            <div class="pr-name">Maria Santos</div>
+            <div class="pr-track">LBC-2026-00846</div>
+            <div class="pr-addr">124 Rizal Ave, Caloocan</div>
+          </div>
+          <div class="pr-right">
+            <span class="pr-badge b-done">Done</span>
+            <span class="pr-eta" style="color:var(--green)">8:45 AM</span>
+          </div>
+        </div>
+
+        <div class="parcel-row active-parcel" data-id="2" data-status="next" data-cod="true" onclick="openParcelDetail(2)">
+          <div class="pr-icon cod"><span style="font-size:18px">💰</span></div>
+          <div class="pr-info">
+            <div class="pr-name">Pedro Reyes</div>
+            <div class="pr-track">LBC-2026-00847</div>
+            <div class="pr-addr">78 Gen. Luna St, Malabon</div>
+          </div>
+          <div class="pr-right">
+            <span class="pr-badge b-next">Next</span>
+            <span class="pr-cod">₱1,250</span>
+          </div>
+        </div>
+
+        <div class="parcel-row" data-id="3" data-status="pending" data-cod="false" onclick="openParcelDetail(3)">
+          <div class="pr-icon std"><span style="font-size:18px">📦</span></div>
+          <div class="pr-info">
+            <div class="pr-name">Ana Garcia</div>
+            <div class="pr-track">LBC-2026-00848</div>
+            <div class="pr-addr">45 Quezon Ave, QC</div>
+          </div>
+          <div class="pr-right">
+            <span class="pr-badge b-pend">Pending</span>
+            <span class="pr-eta">3:00 PM</span>
+          </div>
+        </div>
+
+        <div class="parcel-row" data-id="4" data-status="pending" data-cod="true" onclick="openParcelDetail(4)">
+          <div class="pr-icon cod"><span style="font-size:18px">💰</span></div>
+          <div class="pr-info">
+            <div class="pr-name">Lito Mendoza</div>
+            <div class="pr-track">LBC-2026-00849</div>
+            <div class="pr-addr">12 Bonifacio St, Bulacan</div>
+          </div>
+          <div class="pr-right">
+            <span class="pr-badge b-pend">Pending</span>
+            <span class="pr-cod">₱890</span>
+          </div>
+        </div>
+
+        <div class="parcel-row" data-id="5" data-status="pending" data-cod="false" onclick="openParcelDetail(5)">
+          <div class="pr-icon std"><span style="font-size:18px">📦</span></div>
+          <div class="pr-info">
+            <div class="pr-name">Rosa Villanueva</div>
+            <div class="pr-track">LBC-2026-00850</div>
+            <div class="pr-addr">99 Magsaysay Blvd, Bulacan</div>
+          </div>
+          <div class="pr-right">
+            <span class="pr-badge b-pend">Pending</span>
+            <span class="pr-eta">5:15 PM</span>
+          </div>
+        </div>
+
+        <div class="parcel-row" data-id="6" data-status="pending" data-cod="true" onclick="openParcelDetail(6)">
+          <div class="pr-icon cod"><span style="font-size:18px">💰</span></div>
+          <div class="pr-info">
+            <div class="pr-name">Carlo Bautista</div>
+            <div class="pr-track">LBC-2026-00851</div>
+            <div class="pr-addr">34 Luna St, Valenzuela</div>
+          </div>
+          <div class="pr-right">
+            <span class="pr-badge b-pend">Pending</span>
+            <span class="pr-cod">₱2,400</span>
+          </div>
+        </div>
+
+        <div class="parcel-row" data-id="7" data-status="pending" data-cod="false" onclick="openParcelDetail(7)">
+          <div class="pr-icon std"><span style="font-size:18px">📦</span></div>
+          <div class="pr-info">
+            <div class="pr-name">Nena Cruz</div>
+            <div class="pr-track">LBC-2026-00852</div>
+            <div class="pr-addr">7 Dagohoy St, Caloocan</div>
+          </div>
+          <div class="pr-right">
+            <span class="pr-badge b-pend">Pending</span>
+            <span class="pr-eta">6:00 PM</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PARCEL DETAIL (Dynamic) ══════════ -->
+  <div id="r-parcel-detail" class="screen">
+    <div class="hdr">
+      <div class="hdr-top">
+        <div><div class="hdr-title">Parcel Detail</div><div class="hdr-sub" id="pd-stop-label">Stop 2 of 12 · Next up</div></div>
+        <button class="backbtn" onclick="rShow('parcel')">← Parcels</button>
+      </div>
+    </div>
+    <div class="sync on"><span class="dot"></span>Stop synced · Offline cached</div>
+    <div class="scroll">
+
+      <div class="pd-header">
+        <div class="pd-top">
+          <div class="pd-track" id="pd-tracking">LBC-2026-00847</div>
+          <div class="pd-pkg" id="pd-pkg-desc">Standard Parcel · Box, 1.2 kg</div>
+          <div class="pd-status-row">
+            <span class="pd-status" id="pd-status-badge">Out for Delivery</span>
+            <span class="pd-cod" id="pd-cod-val">COD ₱1,250</span>
+          </div>
+        </div>
+        <div style="padding:10px 14px;display:flex;align-items:center;gap:7px;">
+          <span style="font-size:12px;color:var(--ai);font-weight:800" id="pd-ai-eta">🤖 ETA 10:18 AM</span>
+          <span style="font-size:11px;color:var(--muted)" id="pd-eta-sub">· ~12 min away</span>
+        </div>
+      </div>
+
+      <div class="info-sec">
+        <div class="info-row">
+          <span class="il">Recipient</span>
+          <span class="iv" id="pd-recipient">Pedro Reyes</span>
+        </div>
+        <div class="info-row">
+          <span class="il">Phone</span>
+          <span class="iv" id="pd-phone" style="color:var(--red);cursor:pointer;text-decoration:underline dotted">+63 917 555 0172</span>
+        </div>
+        <div class="info-row">
+          <span class="il">Address</span>
+          <span class="iv" id="pd-addr">78 Gen. Luna St, Malabon City</span>
+        </div>
+        <div class="info-row" id="pd-note-row">
+          <span class="il">Note</span>
+          <span class="iv" id="pd-note" style="font-weight:600;color:var(--muted)">Leave at gate if not home</span>
+        </div>
+        <div class="info-row">
+          <span class="il">Sender</span>
+          <span class="iv" id="pd-sender">Shopee PH · BGC</span>
+        </div>
+        <div class="info-row fuel-row">
+          <span class="il">Fuel Est.</span>
+          <span class="iv" id="pd-fuel-est" style="color:var(--fuel);font-family:var(--mono)">⛽ ~0.35L · ₱39.90</span>
+        </div>
+      </div>
+
+      <!-- Action grid -->
+      <div class="action-grid">
+        <div class="act-btn" id="act-call" onclick=""><span class="act-icon">📞</span>Call</div>
+        <div class="act-btn" id="act-nav" onclick=""><span class="act-icon">🗺️</span>Navigate</div>
+        <div class="act-btn" onclick="openPhotoUI()"><span class="act-icon">📷</span>Photo POD</div>
+        <div class="act-btn" id="act-sms" onclick=""><span class="act-icon">💬</span>SMS</div>
+        <div class="act-btn muted" onclick="openFailedUI()"><span class="act-icon">❌</span>Failed</div>
+        <div class="act-btn muted" onclick="openRescheduleUI()"><span class="act-icon">📅</span>Reschedule</div>
+      </div>
+
+      <div class="deliver-wrap">
+        <button class="deliver-btn" id="deliver-btn" onclick="markDelivered()">
+          <span style="font-size:18px">✅</span> Mark as Delivered
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════ FUEL LOG ══════════ -->
+  <div id="r-fuel" class="screen">
+    <div class="hdr">
+      <div class="hdr-top">
+        <div><div class="hdr-title">My Fuel Log</div><div class="hdr-sub">AI savings · May 21, 2026</div></div>
+        <button class="backbtn" onclick="rShow('home')">← Back</button>
+      </div>
+    </div>
+    <div class="sync on"><span class="dot"></span>Fuel data synced · ₱114/L baseline</div>
+    <div class="scroll">
+
+      <!-- HERO -->
+      <div style="margin:14px 14px 0;background:linear-gradient(135deg,#0B3D1E 0%,#1A5C30 100%);border-radius:16px;padding:15px;color:white;">
+        <div style="font-size:10px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:3px;">⛽ Your Fuel Savings · Today</div>
+        <div style="font-size:36px;font-weight:900;color:#5AC878;line-height:1;font-family:var(--mono);" id="fuel-hero-val">₱94.62</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;margin-bottom:12px;">vs unoptimized route · 8.3km shorter</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div style="background:rgba(255,255,255,.09);border-radius:10px;padding:8px;text-align:center;">
+            <div style="font-size:14px;font-weight:800;color:white;font-family:var(--mono);">0.83L</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.45);margin-top:2px;text-transform:uppercase;letter-spacing:.3px;font-weight:700;">Fuel Saved</div>
+          </div>
+          <div style="background:rgba(255,255,255,.09);border-radius:10px;padding:8px;text-align:center;">
+            <div style="font-size:14px;font-weight:800;color:white;font-family:var(--mono);">8.3km</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.45);margin-top:2px;text-transform:uppercase;letter-spacing:.3px;font-weight:700;">KM Saved</div>
+          </div>
+          <div style="background:rgba(255,255,255,.09);border-radius:10px;padding:8px;text-align:center;">
+            <div style="font-size:14px;font-weight:800;color:white;font-family:var(--mono);">23 min</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.45);margin-top:2px;text-transform:uppercase;letter-spacing:.3px;font-weight:700;">Time Saved</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WEEKLY BAR CHART (interactive) -->
+      <div style="margin:10px 14px 0;background:white;border-radius:14px;border:.5px solid var(--border);padding:12px 14px;">
+        <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:10px;">Weekly Fuel Savings</div>
+        <div style="display:flex;align-items:flex-end;gap:7px;height:72px;margin-bottom:8px;">
+          <div class="fuel-bar" onclick="showDayFuel('Mon','₱78.20')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;"><div style="width:100%;background:linear-gradient(180deg,#40C87A,#0F7F4A);border-radius:4px 4px 0 0;height:42px;transition:opacity .15s"></div><div style="font-size:9px;color:var(--muted);font-weight:700;">M</div></div>
+          <div class="fuel-bar" onclick="showDayFuel('Tue','₱102.50')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;"><div style="width:100%;background:linear-gradient(180deg,#40C87A,#0F7F4A);border-radius:4px 4px 0 0;height:56px;transition:opacity .15s"></div><div style="font-size:9px;color:var(--muted);font-weight:700;">T</div></div>
+          <div class="fuel-bar" onclick="showDayFuel('Wed','₱88.40')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;"><div style="width:100%;background:linear-gradient(180deg,#40C87A,#0F7F4A);border-radius:4px 4px 0 0;height:48px;transition:opacity .15s"></div><div style="font-size:9px;color:var(--muted);font-weight:700;">W</div></div>
+          <div class="fuel-bar" onclick="showDayFuel('Thu','₱116.90')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;"><div style="width:100%;background:linear-gradient(180deg,#40C87A,#0F7F4A);border-radius:4px 4px 0 0;height:64px;transition:opacity .15s"></div><div style="font-size:9px;color:var(--muted);font-weight:700;">Th</div></div>
+          <div class="fuel-bar" onclick="showDayFuel('Fri','₱94.62 (so far)')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;"><div style="width:100%;background:rgba(204,32,39,.2);border-radius:4px 4px 0 0;height:35px;border:1px dashed var(--red);"></div><div style="font-size:9px;color:var(--red);font-weight:800;">F</div></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;"><div style="width:100%;background:#F0F0F5;border-radius:4px 4px 0 0;height:20px;"></div><div style="font-size:9px;color:var(--muted);font-weight:700;">S</div></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;"><div style="width:100%;background:#F0F0F5;border-radius:4px 4px 0 0;height:20px;"></div><div style="font-size:9px;color:var(--muted);font-weight:700;">S</div></div>
+        </div>
+        <div id="day-fuel-tooltip" style="display:none;background:var(--text);color:white;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;text-align:center;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;text-align:center;background:var(--green-l);border-radius:10px;padding:7px;"><div style="font-size:14px;font-weight:800;color:var(--green);font-family:var(--mono);">₱411</div><div style="font-size:9px;color:#085A30;font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:.3px;">This Week</div></div>
+          <div style="flex:1;text-align:center;background:var(--bg);border-radius:10px;padding:7px;"><div style="font-size:14px;font-weight:800;color:var(--text);font-family:var(--mono);">₱1,632</div><div style="font-size:9px;color:var(--muted);font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:.3px;">This Month</div></div>
+          <div style="flex:1;text-align:center;background:var(--ai-l);border-radius:10px;padding:7px;"><div style="font-size:14px;font-weight:800;color:var(--ai);font-family:var(--mono);">94%</div><div style="font-size:9px;color:#3B22A0;font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:.3px;">AI Efficiency</div></div>
+        </div>
+      </div>
+
+      <!-- PER-STOP LOG -->
+      <div style="margin:10px 14px 0;background:white;border-radius:14px;border:.5px solid var(--border);padding:12px 14px;">
+        <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:10px;">Today's Stop-by-Stop Log</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid var(--border);cursor:pointer;" onclick="openParcelDetail(1)">
+          <div style="width:26px;height:26px;border-radius:50%;background:var(--green-l);color:var(--green);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✓</div>
+          <div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--text);">Maria Santos</div><div style="font-size:10px;color:var(--muted);">124 Rizal Ave · 3.6km</div></div>
+          <div style="text-align:right;"><div style="font-size:12px;font-weight:800;color:var(--fuel);font-family:var(--mono);">0.41L</div><div style="font-size:10px;color:var(--muted);">₱46.74</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid var(--border);cursor:pointer;" onclick="openParcelDetail(2)">
+          <div style="width:26px;height:26px;border-radius:50%;background:var(--red);color:white;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+          <div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--text);">Pedro Reyes</div><div style="font-size:10px;color:var(--muted);">78 Gen. Luna · 4.2km</div></div>
+          <div style="text-align:right;"><div style="font-size:12px;font-weight:800;color:var(--fuel);font-family:var(--mono);">~0.35L</div><div style="font-size:10px;color:var(--muted);">est. ₱39.90</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid var(--border);cursor:pointer;" onclick="openParcelDetail(3)">
+          <div style="width:26px;height:26px;border-radius:50%;background:#F0F0F5;color:var(--muted);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+          <div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--text);">Ana Garcia</div><div style="font-size:10px;color:var(--muted);">45 Quezon Ave · 7.4km</div></div>
+          <div style="text-align:right;"><div style="font-size:12px;font-weight:800;color:var(--muted);font-family:var(--mono);">~0.62L</div><div style="font-size:10px;color:var(--muted);">est. ₱70.68</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer;" onclick="openParcelDetail(4)">
+          <div style="width:26px;height:26px;border-radius:50%;background:#F0F0F5;color:var(--muted);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div>
+          <div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--text);">Lito Mendoza</div><div style="font-size:10px;color:var(--muted);">12 Bonifacio St · 11.2km</div></div>
+          <div style="text-align:right;"><div style="font-size:12px;font-weight:800;color:var(--muted);font-family:var(--mono);">~0.89L</div><div style="font-size:10px;color:var(--muted);">est. ₱101.46</div></div>
+        </div>
+      </div>
+
+      <!-- FUEL PRICE ALERT -->
+      <div style="margin:10px 14px 14px;background:var(--yellow-l);border-radius:12px;border:.5px solid rgba(245,168,0,.35);padding:11px 13px;display:flex;align-items:flex-start;gap:10px;">
+        <span style="font-size:18px;flex-shrink:0;">⚠️</span>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:#7A5200;margin-bottom:3px;">Fuel Price Update</div>
+          <div style="font-size:11px;color:#7A5200;line-height:1.5;">₱114/L confirmed at Petron Caloocan. AI recalculated all routes. Savings adjusted +₱4.56 today.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bnav">
+    <button class="ni active" id="rn-home" onclick="rShow('home')"><span class="nicon">🏠</span>Home</button>
+    <button class="ni" id="rn-route" onclick="rShow('route')"><span class="nicon">🗺️</span>Route</button>
+    <button class="ni" id="rn-parcel" onclick="rShow('parcel')"><span class="nicon">📦</span>Parcels</button>
+    <button class="ni" id="rn-fuel" onclick="rShow('fuel')"><span class="nicon">⛽</span>Fuel</button>
+    <button class="ni" id="rn-profile" onclick="rShow('profile')"><span class="nicon">👤</span>Profile</button>
+  </div>
+
+  <!-- MORE TRAY BACKDROP -->
+  <div class="more-tray-bg" id="more-tray-bg" onclick="closeMoreTray()"></div>
+
+  <!-- MORE TRAY -->
+  <div class="more-tray" id="more-tray">
+    <div class="more-tray-drag"></div>
+    <div style="padding:4px 20px 10px;border-bottom:.5px solid var(--border)">
+      <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">More Options</div>
+    </div>
+    <div class="more-item" onclick="closeMoreTray();rShow('profile')">
+      <div class="more-item-icon" style="background:var(--red-l)">👤</div>
+      <div class="more-item-info">
+        <div class="more-item-title">Profile</div>
+        <div class="more-item-sub">Juan dela Cruz · ID-R-00441</div>
+      </div>
+      <span class="more-item-arrow">›</span>
+    </div>
+    <div class="more-item" onclick="closeMoreTray();rShow('report')">
+      <div class="more-item-icon" style="background:var(--yellow-l)">📝</div>
+      <div class="more-item-info">
+        <div class="more-item-title">Report</div>
+        <div class="more-item-sub">Service requests &amp; incidents</div>
+      </div>
+      <span class="more-item-arrow">›</span>
+    </div>
+    <div class="more-item" onclick="closeMoreTray();showToast('🔍 Monitor coming soon')">
+      <div class="more-item-icon" style="background:var(--ai-l)">📊</div>
+      <div class="more-item-info">
+        <div class="more-item-title">Monitor</div>
+        <div class="more-item-sub">Performance &amp; live metrics</div>
+      </div>
+      <span class="more-item-arrow">›</span>
+    </div>
+    <div style="height:20px"></div>
+  </div>
+
+  <!-- ══════════ PROFILE ══════════ -->
+  <div id="r-profile" class="screen">
+    <div class="hdr">
+      <div class="hdr-top">
+        <div><div class="hdr-title">My Profile</div><div class="hdr-sub">Rider information &amp; stats</div></div>
+        <button class="backbtn" onclick="rShow('home')">← Back</button>
+      </div>
+    </div>
+    <div class="sync on"><span class="dot"></span>Profile synced · Caloocan Hub</div>
+    <div class="scroll">
+
+      <!-- RIDER CARD -->
+      <div class="profile-card">
+        <div class="profile-avatar">JC</div>
+        <div class="profile-name">Juan dela Cruz</div>
+        <div class="profile-meta">Caloocan Hub · Motorcycle Rider</div>
+        <div class="profile-id">ID-R-00441 · Plate: ABC-1234</div>
+        <!-- Shift toggle -->
+        <div class="shift-row">
+          <div class="shift-pill active-shift" id="shift-avail" onclick="setShift('avail')">🟢 Available</div>
+          <div class="shift-pill" id="shift-onroute" onclick="setShift('onroute')">🏍 On Route</div>
+          <div class="shift-pill" id="shift-break" onclick="setShift('break')">☕ On Break</div>
+        </div>
+      </div>
+
+      <!-- STATS GRID -->
+      <div class="profile-stats">
+        <div class="pstat accent">
+          <div class="pstat-val">284</div>
+          <div class="pstat-lbl">Total Deliveries</div>
+        </div>
+        <div class="pstat green-v">
+          <div class="pstat-val">₱18.4k</div>
+          <div class="pstat-lbl">Total COD Collected</div>
+        </div>
+        <div class="pstat fuel-v">
+          <div class="pstat-val">₱1,632</div>
+          <div class="pstat-lbl">Fuel Saved This Month</div>
+        </div>
+        <div class="pstat ai-v">
+          <div class="pstat-val">3</div>
+          <div class="pstat-lbl">Incidents Logged</div>
+        </div>
+      </div>
+
+      <!-- PERFORMANCE -->
+      <div class="perf-card">
+        <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:12px;">Performance Rating</div>
+        <div class="perf-row">
+          <div class="perf-lbl-row"><span class="perf-lbl">On-Time Delivery</span><span class="perf-pct" style="color:var(--green)">94%</span></div>
+          <div class="perf-track"><div class="perf-fill green" style="width:94%"></div></div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-lbl-row"><span class="perf-lbl">Delivery Success Rate</span><span class="perf-pct">97%</span></div>
+          <div class="perf-track"><div class="perf-fill" style="width:97%"></div></div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-lbl-row"><span class="perf-lbl">COD Accuracy</span><span class="perf-pct" style="color:var(--green)">100%</span></div>
+          <div class="perf-track"><div class="perf-fill green" style="width:100%"></div></div>
+        </div>
+      </div>
+
+      <!-- ASSIGNMENT CARD -->
+      <div style="margin:10px 14px 14px;background:white;border-radius:14px;border:.5px solid var(--border);overflow:hidden">
+        <div class="info-row"><span class="il">Hub</span><span class="iv">Caloocan District Hub</span></div>
+        <div class="info-row"><span class="il">Shift</span><span class="iv">6:00 AM – 6:00 PM</span></div>
+        <div class="info-row"><span class="il">Motorcycle</span><span class="iv">Honda Click 125 · ABC-1234</span></div>
+        <div class="info-row"><span class="il">Joined</span><span class="iv">March 2024 · 14 months</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════ REPORT ══════════ -->
+  <div id="r-report" class="screen">
+    <div class="hdr">
+      <div class="hdr-top">
+        <div><div class="hdr-title" id="report-hdr-title">Submit a Report</div><div class="hdr-sub" id="report-hdr-sub">Choose report type to begin</div></div>
+        <button class="backbtn" onclick="rShow('home')">← Back</button>
+      </div>
+    </div>
+    <div class="sync on"><span class="dot"></span>Reports synced to hub</div>
+
+    <!-- STEP 1: TYPE SELECTOR -->
+    <div class="report-type-screen active" id="rpt-step1">
+      <div class="scroll" style="padding-top:14px">
+        <div style="padding:0 14px 12px;font-size:13px;color:var(--muted);font-weight:600;line-height:1.5">What are you reporting? This determines who at the hub gets notified.</div>
+        <div class="rtype-card sr" onclick="startReport('sr')">
+          <div class="rtype-icon sr">🟦</div>
+          <div>
+            <div class="rtype-title">Service Request</div>
+            <div class="rtype-sub">Something you need — extra parcels, vehicle issue, COD help, supplies</div>
+          </div>
+        </div>
+        <div class="rtype-card inc" onclick="startReport('inc')">
+          <div class="rtype-icon inc">🔴</div>
+          <div>
+            <div class="rtype-title">Incident / Issue</div>
+            <div class="rtype-sub">Something went wrong — accident, dispute, damaged or lost package</div>
+          </div>
+        </div>
+
+        <!-- Active tickets list -->
+        <div style="padding:0 14px">
+          <div style="font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;margin-top:4px">Active Tickets</div>
+          <div id="ticket-list">
+            <!-- Seeded tickets -->
+            <div class="ticket-row">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <span class="ticket-id">SR-0021</span>
+                <span class="ticket-chip tc-progress">In Progress</span>
+              </div>
+              <div class="ticket-title">Address Clarification</div>
+              <div class="ticket-meta">LBC-2026-00849 · Submitted 8:12 AM</div>
+            </div>
+            <div class="ticket-row">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <span class="ticket-id">INC-0008</span>
+                <span class="ticket-chip tc-resolved">Resolved</span>
+              </div>
+              <div class="ticket-title">Package Damaged</div>
+              <div class="ticket-meta">LBC-2026-00846 · Submitted May 20</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: FORM -->
+    <div class="rform-wrap" id="rpt-step2">
+      <div style="background:white;border-bottom:.5px solid var(--border);padding:8px 14px 10px;display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <button onclick="backToStep1()" style="background:var(--bg);border:none;border-radius:8px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text)">← Change</button>
+        <div id="rpt-type-badge" style="font-size:12px;font-weight:800;padding:4px 11px;border-radius:20px;background:var(--ai-l);color:var(--ai)">Service Request</div>
+      </div>
+      <div class="scroll" style="padding:12px 14px 0">
+
+        <div class="rfield">
+          <div class="rfield-lbl">Order Number</div>
+          <select id="rpt-order">
+            <option value="">— Select parcel —</option>
+            <option value="LBC-2026-00846">LBC-2026-00846 · Maria Santos</option>
+            <option value="LBC-2026-00847">LBC-2026-00847 · Pedro Reyes</option>
+            <option value="LBC-2026-00848">LBC-2026-00848 · Ana Garcia</option>
+            <option value="LBC-2026-00849">LBC-2026-00849 · Lito Mendoza</option>
+            <option value="LBC-2026-00850">LBC-2026-00850 · Rosa Villanueva</option>
+            <option value="LBC-2026-00851">LBC-2026-00851 · Carlo Bautista</option>
+            <option value="LBC-2026-00852">LBC-2026-00852 · Nena Cruz</option>
+            <option value="general">General (no specific parcel)</option>
+          </select>
+        </div>
+
+        <div class="rfield">
+          <div class="rfield-lbl">Category</div>
+          <select id="rpt-category">
+            <!-- populated by JS -->
+          </select>
+        </div>
+
+        <div class="rfield">
+          <div class="rfield-lbl">Note / Description</div>
+          <textarea id="rpt-note" placeholder="Describe the issue in detail…"></textarea>
+        </div>
+
+        <div class="rfield">
+          <div class="rfield-lbl">Photo</div>
+          <div class="photo-sim" id="rpt-photo" onclick="captureReportPhoto()">
+            <span style="font-size:26px">📷</span>
+            <span style="font-size:12px;font-weight:700;color:var(--muted)" id="rpt-photo-lbl">Tap to capture photo</span>
+          </div>
+        </div>
+
+        <div class="rfield" id="rpt-priority-field" style="display:none">
+          <div class="rfield-lbl">Priority</div>
+          <div class="rpriority-row">
+            <div class="rprio" onclick="selectPriority(this,'p1')" id="rprio-p1">
+              <div class="rprio-badge" style="color:var(--red)">P1</div>
+              <div class="rprio-label">Urgent</div>
+            </div>
+            <div class="rprio selected-p" onclick="selectPriority(this,'p2')" id="rprio-p2">
+              <div class="rprio-badge">P2</div>
+              <div class="rprio-label">High</div>
+            </div>
+            <div class="rprio" onclick="selectPriority(this,'p3')" id="rprio-p3">
+              <div class="rprio-badge">P3</div>
+              <div class="rprio-label">Normal</div>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="submitReport()" class="cta" style="margin:8px 0 16px;width:100%">
+          <span style="font-size:16px">📨</span> Submit to Hub
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: CONFIRMATION -->
+    <div class="report-type-screen" id="rpt-step3">
+      <div class="scroll" style="padding:24px 14px 0;display:flex;flex-direction:column;align-items:center;text-align:center">
+        <div style="font-size:56px;margin-bottom:14px">✅</div>
+        <div style="font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px">Report Submitted!</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Hub has been notified and will respond shortly.</div>
+        <div style="background:var(--bg);border-radius:14px;padding:16px 20px;width:100%;text-align:left;margin-bottom:20px">
+          <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Ticket Details</div>
+          <div style="font-size:22px;font-weight:800;color:var(--text);font-family:var(--mono);margin-bottom:4px" id="rpt-ticket-num">SR-0022</div>
+          <div style="font-size:12px;color:var(--muted)" id="rpt-ticket-time">Submitted just now</div>
+          <div style="margin-top:10px;padding-top:10px;border-top:.5px solid var(--border);font-size:12px;color:var(--muted)">
+            <span style="font-weight:700;color:var(--text)" id="rpt-ticket-cat">Category</span> · <span id="rpt-ticket-order">No parcel</span>
+          </div>
+        </div>
+        <div style="background:var(--green-l);border-radius:12px;padding:10px 14px;width:100%;display:flex;align-items:center;gap:10px;margin-bottom:20px;text-align:left">
+          <span style="font-size:18px">📡</span>
+          <div style="font-size:12px;color:#085A30;font-weight:700;">Hub notified · Response expected in 15–30 min</div>
+        </div>
+        <button onclick="resetReport()" class="cta" style="margin:0;width:100%">Submit Another Report</button>
+        <button onclick="rShow('home')" style="margin-top:8px;background:none;border:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;padding:8px">Back to Home</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════ NOTIFICATION PANEL ══════════ -->
+  <div class="notif-panel" id="notif-panel">
+    <div class="notif-hdr">
+      <span class="notif-hdr-title">🔔 Notifications <span style="font-size:11px;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:20px;margin-left:6px;">3</span></span>
+      <button class="notif-close" onclick="closeNotifPanel()">✕</button>
+    </div>
+    <div class="notif-item" onclick="closeNotifPanel();rShow('route')">
+      <div class="notif-icon" style="background:var(--ai-l)">🤖</div>
+      <div class="notif-body">
+        <div class="notif-title">AI Route Update</div>
+        <div class="notif-desc">Traffic on C-4 Road. Alternate via Bagong Barrio saves 14 min & ₱23.94 fuel.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+        <span class="notif-time">2 min</span>
+        <span class="notif-unread"></span>
+      </div>
+    </div>
+    <div class="notif-item" onclick="closeNotifPanel();openParcelDetail(2)">
+      <div class="notif-icon" style="background:var(--green-l)">📦</div>
+      <div class="notif-body">
+        <div class="notif-title">Upcoming Stop: Pedro Reyes</div>
+        <div class="notif-desc">12 min away. COD ₱1,250 — ensure exact change is ready.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+        <span class="notif-time">5 min</span>
+        <span class="notif-unread"></span>
+      </div>
+    </div>
+    <div class="notif-item" onclick="closeNotifPanel();rShow('fuel')">
+      <div class="notif-icon" style="background:var(--yellow-l)">⛽</div>
+      <div class="notif-body">
+        <div class="notif-title">Fuel Price Alert</div>
+        <div class="notif-desc">₱114/L confirmed at Petron Caloocan. AI updated savings to ₱94.62.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+        <span class="notif-time">18 min</span>
+        <span class="notif-unread"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ MODAL BOTTOM SHEET ══════════ -->
+  <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-sheet" id="modal-sheet">
+      <div class="modal-drag"></div>
+      <div class="modal-content" id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ CALL OVERLAY ══════════ -->
+  <div class="call-overlay" id="call-overlay">
+    <div class="call-avatar" id="call-avatar">👤</div>
+    <div class="call-name-big" id="call-name">Pedro Reyes</div>
+    <div class="call-phone-lbl" id="call-phone">+63 917 555 0172</div>
+    <div class="call-status-lbl" id="call-status">Calling…</div>
+    <div class="call-timer-lbl" id="call-timer"></div>
+    <div class="call-actions">
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <button class="call-btn" style="background:rgba(255,255,255,.12);" onclick="toggleMute(this)">🔇</button>
+        <div class="call-btn-lbl">Mute</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <button class="call-btn call-end" onclick="endCall()">📵</button>
+        <div class="call-btn-lbl" style="color:rgba(255,255,255,.55);margin-top:6px;font-size:9px;font-weight:700;">End</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <button class="call-btn" style="background:rgba(255,255,255,.12);" onclick="toggleSpeaker(this)">🔊</button>
+        <div class="call-btn-lbl">Speaker</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SEARCH OVERLAY ══════════ -->
+  <div class="search-overlay" id="search-overlay">
+    <div class="search-hdr">
+      <span style="font-size:18px;color:white;flex-shrink:0">🔍</span>
+      <div class="search-input-wrap">
+        <input type="text" id="search-input" placeholder="Name, tracking, or address…" oninput="doSearch(this.value)" autocomplete="off">
+      </div>
+      <button class="search-cancel" onclick="closeSearchUI()">Cancel</button>
+    </div>
+    <div class="search-results" id="search-results"></div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+</div><!-- end phone -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const PARCELS = [
+  { id:1, stop:1, name:'Maria Santos',   tracking:'LBC-2026-00846', addr:'124 Rizal Ave, Caloocan',         phone:'+63 917 555 0171', cod:null, type:'std', status:'done',    etaLabel:'8:45 AM',  note:'',                            sender:'Lazada PH · Pasig',        weight:'0.8 kg',  fuelEst:'0.41L',  fuelCost:'₱46.74',  dist:'3.6km', aiEta:'Delivered 8:45 AM' },
+  { id:2, stop:2, name:'Pedro Reyes',    tracking:'LBC-2026-00847', addr:'78 Gen. Luna St, Malabon City',   phone:'+63 917 555 0172', cod:1250, type:'cod', status:'next',    etaLabel:'~12 min',  note:'Leave at gate if not home',   sender:'Shopee PH · BGC',          weight:'1.2 kg',  fuelEst:'~0.35L', fuelCost:'₱39.90',  dist:'4.2km', aiEta:'ETA 10:18 AM' },
+  { id:3, stop:3, name:'Ana Garcia',     tracking:'LBC-2026-00848', addr:'45 Quezon Ave, QC',               phone:'+63 918 555 0173', cod:null, type:'std', status:'pending', etaLabel:'3:00 PM',  note:'',                            sender:'Lazada PH · Taguig',       weight:'0.5 kg',  fuelEst:'~0.62L', fuelCost:'₱70.68',  dist:'7.4km', aiEta:'ETA 3:00 PM' },
+  { id:4, stop:4, name:'Lito Mendoza',   tracking:'LBC-2026-00849', addr:'12 Bonifacio St, Bulacan',        phone:'+63 919 555 0174', cod:890,  type:'cod', status:'pending', etaLabel:'4:30 PM',  note:'Call before arriving',        sender:'Shopee PH · Mandaluyong',  weight:'2.1 kg',  fuelEst:'~0.89L', fuelCost:'₱101.46', dist:'11.2km',aiEta:'ETA 4:30 PM' },
+  { id:5, stop:5, name:'Rosa Villanueva',tracking:'LBC-2026-00850', addr:'99 Magsaysay Blvd, Bulacan',      phone:'+63 920 555 0175', cod:null, type:'std', status:'pending', etaLabel:'5:15 PM',  note:'',                            sender:'Zalora PH · Makati',       weight:'0.9 kg',  fuelEst:'~1.02L', fuelCost:'₱116.28', dist:'14.8km',aiEta:'ETA 5:15 PM' },
+  { id:6, stop:6, name:'Carlo Bautista', tracking:'LBC-2026-00851', addr:'34 Luna St, Valenzuela',          phone:'+63 921 555 0176', cod:2400, type:'cod', status:'pending', etaLabel:'6:00 PM',  note:'Fragile — handle with care',  sender:'Apple PH · BGC',           weight:'0.4 kg',  fuelEst:'~0.76L', fuelCost:'₱86.64',  dist:'9.8km', aiEta:'ETA 6:00 PM' },
+  { id:7, stop:7, name:'Nena Cruz',      tracking:'LBC-2026-00852', addr:'7 Dagohoy St, Caloocan',          phone:'+63 922 555 0177', cod:null, type:'std', status:'pending', etaLabel:'6:30 PM',  note:'',                            sender:'H&M PH · Ortigas',         weight:'1.5 kg',  fuelEst:'~0.48L', fuelCost:'₱54.72',  dist:'5.6km', aiEta:'ETA 6:30 PM' },
+];
+
+let currentParcelId = 2;
+let callInterval = null;
+let callSeconds = 0;
+let mutedCall = false;
+let speakerOn = false;
+let deliveredCount = 1; // Maria Santos already done
+
+// ═══════════════════════════════════════════════════
+// SCREEN ROUTING
+// ═══════════════════════════════════════════════════
+function rShow(name) {
+  ['home','route','parcel','parcel-detail','fuel','profile','report'].forEach(s => {
+    const e = document.getElementById('r-' + s);
+    if (e) e.classList.remove('active');
+  });
+  ['home','route','parcel','fuel','profile'].forEach(s => {
+    const n = document.getElementById('rn-' + s);
+    if (n) n.classList.remove('active');
+  });
+  const sc = document.getElementById('r-' + name);
+  if (sc) sc.classList.add('active');
+  const navMap = { 'parcel-detail':'parcel', 'report':'profile' };
+  const nv = document.getElementById('rn-' + (navMap[name] || name));
+  if (nv) nv.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+// PARCEL DETAIL — Dynamic Loading
+// ═══════════════════════════════════════════════════
+function openParcelDetail(id) {
+  currentParcelId = id;
+  const p = PARCELS.find(x => x.id === id);
+  if (!p) return;
+
+  // Header sub
+  const statLbl = p.status === 'done' ? 'Delivered' : p.status === 'next' ? 'Next up' : 'Pending';
+  document.getElementById('pd-stop-label').textContent = `Stop ${p.stop} of 12 · ${statLbl}`;
+
+  // Tracking & package
+  document.getElementById('pd-tracking').textContent = p.tracking;
+  document.getElementById('pd-pkg-desc').textContent = `${p.type === 'cod' ? 'COD Parcel' : 'Standard Parcel'} · Box, ${p.weight}`;
+
+  // Status badge
+  const badge = document.getElementById('pd-status-badge');
+  badge.textContent = p.status === 'done' ? 'Delivered ✓' : p.status === 'next' ? 'Out for Delivery' : 'Pending';
+  badge.style.background = p.status === 'done' ? 'var(--green-l)' : 'var(--red-l)';
+  badge.style.color = p.status === 'done' ? 'var(--green)' : 'var(--red)';
+
+  // COD
+  const codEl = document.getElementById('pd-cod-val');
+  if (p.cod) { codEl.textContent = `COD ₱${p.cod.toLocaleString()}`; codEl.style.display = ''; }
+  else codEl.style.display = 'none';
+
+  // AI ETA
+  document.getElementById('pd-ai-eta').textContent = `🤖 ${p.aiEta}`;
+  document.getElementById('pd-eta-sub').textContent = `· ${p.dist} away`;
+
+  // Info rows
+  document.getElementById('pd-recipient').textContent = p.name;
+  const phoneEl = document.getElementById('pd-phone');
+  phoneEl.textContent = p.phone;
+  phoneEl.onclick = () => openCallUI(p.name, p.phone);
+
+  document.getElementById('pd-addr').textContent = p.addr;
+
+  const noteRow = document.getElementById('pd-note-row');
+  if (p.note) {
+    noteRow.style.display = 'flex';
+    document.getElementById('pd-note').textContent = p.note;
+  } else noteRow.style.display = 'none';
+
+  document.getElementById('pd-sender').textContent = p.sender;
+  document.getElementById('pd-fuel-est').textContent = `⛽ ${p.fuelEst} est. · ${p.fuelCost}`;
+
+  // Action buttons
+  document.getElementById('act-call').onclick = () => openCallUI(p.name, p.phone);
+  document.getElementById('act-nav').onclick  = () => openNavigateUI(p.addr, p.name, p.dist);
+  document.getElementById('act-sms').onclick  = () => openSMSUI(p.name, p.phone);
+
+  // Deliver button
+  const btn = document.getElementById('deliver-btn');
+  if (p.status === 'done') {
+    btn.style.background = 'var(--green)';
+    btn.innerHTML = '<span style="font-size:18px">✅</span> Delivered';
+    btn.disabled = true; btn.style.opacity = '.65';
+  } else {
+    btn.style.background = 'var(--red)';
+    btn.innerHTML = '<span style="font-size:18px">✅</span> Mark as Delivered';
+    btn.disabled = false; btn.style.opacity = '1';
+    btn.onclick = () => markDelivered();
+  }
+
+  rShow('parcel-detail');
+}
+
+// ═══════════════════════════════════════════════════
+// MARK AS DELIVERED
+// ═══════════════════════════════════════════════════
+function markDelivered() {
+  const p = PARCELS.find(x => x.id === currentParcelId);
+  if (!p || p.status === 'done') return;
+
+  showModal(`
+    <div style="text-align:center;padding:6px 0 8px">
+      <div style="font-size:52px;margin-bottom:10px">✅</div>
+      <div class="m-title" style="margin-bottom:6px">Confirm Delivery</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5">
+        <strong style="color:var(--text)">${p.name}</strong><br>
+        <span style="font-family:var(--mono);font-size:10px">${p.tracking}</span>
+      </div>
+      ${p.cod ? `
+      <div style="background:var(--green-l);border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:left;">
+        <div style="font-size:10px;font-weight:800;color:#085A30;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">💰 COD to Collect</div>
+        <div style="font-size:26px;font-weight:900;color:var(--green);font-family:var(--mono);">₱${p.cod.toLocaleString()}</div>
+        <div style="font-size:11px;color:#085A30;margin-top:2px;">Confirm cash received from recipient</div>
+      </div>` : ''}
+      <div style="background:var(--fuel-l);border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:8px;margin-bottom:16px;text-align:left;">
+        <span style="font-size:18px">⛽</span>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--fuel)">Fuel Auto-Logged</div>
+          <div style="font-size:11px;color:var(--muted)">${p.fuelEst} · ${p.fuelCost}</div>
+        </div>
+      </div>
+      <button onclick="confirmDelivered()" class="m-btn green" style="margin-bottom:8px">✓ Confirm & Log Delivery</button>
+      <button onclick="closeModal()" class="m-btn ghost">Cancel</button>
+    </div>
+  `);
+}
+
+function confirmDelivered() {
+  const p = PARCELS.find(x => x.id === currentParcelId);
+  if (!p) return;
+  p.status = 'done';
+  deliveredCount++;
+
+  // Update deliver button immediately
+  const btn = document.getElementById('deliver-btn');
+  btn.style.background = 'var(--green)';
+  btn.innerHTML = '<span style="font-size:18px">✅</span> Delivered! Fuel logged.';
+  btn.disabled = true; btn.style.opacity = '.65';
+
+  // Update home stops left
+  const stopsEl = document.getElementById('home-stops-left');
+  if (stopsEl) { const v = parseInt(stopsEl.textContent); if (!isNaN(v) && v > 0) stopsEl.textContent = v - 1; }
+
+  // Update parcel list row
+  refreshParcelRow(p);
+
+  closeModal();
+  showToast('✅ Delivered! Stop ' + p.stop + ' logged.');
+  setTimeout(() => rShow('parcel'), 1200);
+}
+
+function refreshParcelRow(p) {
+  const row = document.querySelector(`.parcel-row[data-id="${p.id}"]`);
+  if (!row) return;
+  row.dataset.status = 'done';
+  row.classList.remove('active-parcel');
+
+  const icon = row.querySelector('.pr-icon span');
+  if (icon) icon.textContent = '✅';
+  row.querySelector('.pr-icon').className = 'pr-icon';
+
+  const badge = row.querySelector('.pr-badge');
+  if (badge) { badge.textContent = 'Done'; badge.className = 'pr-badge b-done'; }
+
+  const etaEl = row.querySelector('.pr-eta,.pr-cod');
+  if (etaEl) {
+    etaEl.className = 'pr-eta';
+    etaEl.style.color = 'var(--green)';
+    const now = new Date();
+    etaEl.textContent = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// FILTER PARCELS
+// ═══════════════════════════════════════════════════
+function filterParcels(filter, chipEl) {
+  document.querySelectorAll('.pf-chip').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+
+  document.querySelectorAll('.parcel-row[data-id]').forEach(row => {
+    const status = row.dataset.status;
+    const isCod  = row.dataset.cod === 'true';
+    let show = true;
+    if (filter === 'pending') show = status !== 'done';
+    else if (filter === 'cod')     show = isCod;
+    else if (filter === 'done')    show = status === 'done';
+    row.style.display = show ? '' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════
+function openNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  panel.classList.add('open');
+  // Mark notifications as read
+  document.getElementById('notif-dot').classList.remove('show');
+}
+
+function closeNotifPanel() {
+  document.getElementById('notif-panel').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════════
+function openSearchUI() {
+  const overlay = document.getElementById('search-overlay');
+  overlay.classList.add('open');
+  doSearch('');
+  setTimeout(() => { const inp = document.getElementById('search-input'); if (inp) { inp.value = ''; inp.focus(); } }, 150);
+}
+
+function closeSearchUI() {
+  document.getElementById('search-overlay').classList.remove('open');
+}
+
+function doSearch(q) {
+  const container = document.getElementById('search-results');
+  if (!container) return;
+  const query = q.toLowerCase().trim();
+  const results = query === ''
+    ? PARCELS
+    : PARCELS.filter(p =>
+        p.name.toLowerCase().includes(query) ||
+        p.tracking.toLowerCase().includes(query) ||
+        p.addr.toLowerCase().includes(query)
+      );
+
+  if (results.length === 0) {
+    container.innerHTML = `<div class="search-empty"><div style="font-size:40px;margin-bottom:10px">🔍</div><div style="font-size:13px;font-weight:700;color:var(--text)">No results</div><div style="font-size:12px;margin-top:4px">Try a name or tracking number</div></div>`;
+    return;
+  }
+
+  container.innerHTML = results.map(p => {
+    const icon = p.status === 'done' ? '✅' : p.cod ? '💰' : '📦';
+    const badgeClass = p.status === 'done' ? 'b-done' : p.status === 'next' ? 'b-next' : 'b-pend';
+    const badgeTxt   = p.status === 'done' ? 'Done'  : p.status === 'next' ? 'Next'  : 'Pending';
+    return `
+      <div onclick="closeSearchUI();openParcelDetail(${p.id})" style="background:white;border:.5px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:7px;transition:border-color .15s;" onmouseover="this.style.borderColor='rgba(204,32,39,.3)'" onmouseout="this.style.borderColor='rgba(0,0,0,.08)'">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${p.name}</div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono)">${p.tracking}</div>
+          <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.addr}</div>
+        </div>
+        <span class="badge ${badgeClass}" style="flex-shrink:0">${badgeTxt}</span>
+      </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// CALL UI
+// ═══════════════════════════════════════════════════
+function openCallUI(name, phone) {
+  document.getElementById('call-name').textContent = name;
+  document.getElementById('call-phone').textContent = phone;
+  document.getElementById('call-status').textContent = 'Calling…';
+  document.getElementById('call-timer').textContent = '';
+  document.getElementById('call-avatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('call-overlay').classList.add('open');
+  if (callInterval) clearInterval(callInterval);
+  callSeconds = 0; mutedCall = false; speakerOn = false;
+
+  setTimeout(() => {
+    document.getElementById('call-status').textContent = 'Connected';
+    callInterval = setInterval(() => {
+      callSeconds++;
+      const m = Math.floor(callSeconds / 60).toString().padStart(2,'0');
+      const s = (callSeconds % 60).toString().padStart(2,'0');
+      document.getElementById('call-timer').textContent = `${m}:${s}`;
+    }, 1000);
+  }, 2200);
+}
+
+function endCall() {
+  if (callInterval) { clearInterval(callInterval); callInterval = null; }
+  document.getElementById('call-overlay').classList.remove('open');
+  if (callSeconds > 0) showToast('📞 Call ended · ' + Math.floor(callSeconds/60) + ':' + (callSeconds%60).toString().padStart(2,'0'));
+}
+
+function toggleMute(btn) {
+  mutedCall = !mutedCall;
+  btn.textContent = mutedCall ? '🔕' : '🔇';
+  btn.style.background = mutedCall ? 'var(--red)' : 'rgba(255,255,255,.12)';
+  btn.nextElementSibling && (btn.nextElementSibling.textContent = mutedCall ? 'Unmute' : 'Mute');
+}
+
+function toggleSpeaker(btn) {
+  speakerOn = !speakerOn;
+  btn.style.background = speakerOn ? '#5B35CE' : 'rgba(255,255,255,.12)';
+}
+
+// ═══════════════════════════════════════════════════
+// NAVIGATE UI
+// ═══════════════════════════════════════════════════
+function openNavigateUI(addr, name, dist) {
+  showModal(`
+    <div>
+      <div class="m-title">🗺️ Navigate to Stop</div>
+      <div class="m-sub">${name} · Stop ${(PARCELS.find(p=>p.addr===addr)||{}).stop||''}</div>
+      <div class="m-card" style="margin-bottom:10px">
+        <div style="font-size:10px;color:var(--muted);font-weight:600;margin-bottom:3px">DESTINATION</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${addr}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div style="background:var(--ai-l);border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-size:17px;font-weight:800;color:var(--ai);font-family:var(--mono)">~12 min</div>
+          <div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">AI ETA</div>
+        </div>
+        <div style="background:var(--fuel-l);border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-size:17px;font-weight:800;color:var(--fuel);font-family:var(--mono)">${dist}</div>
+          <div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Distance</div>
+        </div>
+      </div>
+      <div style="background:var(--bg);border-radius:11px;padding:11px 13px;margin-bottom:14px;line-height:1.7;font-size:11px;color:var(--muted)">
+        <div style="font-size:11px;font-weight:800;color:var(--text);margin-bottom:5px">Turn-by-Turn</div>
+        <div>➤ Head south on <strong>Rizal Ave</strong> · 1.2km</div>
+        <div>➤ Turn left onto <strong>C-4 Road</strong> · 1.8km</div>
+        <div>➤ Right onto <strong>Gen. Luna St</strong> · 450m</div>
+        <div style="color:var(--green);font-weight:700">📍 Arrive at destination on left</div>
+      </div>
+      <button onclick="closeModal();showToast('🏍 Navigation started!')" class="m-btn red">🏍 Start Navigation</button>
+    </div>
+  `);
+}
+
+// ═══════════════════════════════════════════════════
+// PHOTO POD
+// ═══════════════════════════════════════════════════
+function openPhotoUI() {
+  showModal(`
+    <div>
+      <div class="m-title">📷 Proof of Delivery</div>
+      <div class="m-sub">Capture or upload a POD photo to complete delivery</div>
+      <div id="photo-preview" onclick="simulateCapture()" style="width:100%;height:160px;background:var(--bg);border-radius:14px;border:2px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;cursor:pointer;transition:all .2s;">
+        <span style="font-size:40px">📷</span>
+        <span style="font-size:12px;color:var(--muted);font-weight:600">Tap to capture photo</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+        <button onclick="simulateCapture()" class="m-btn red">📷 Camera</button>
+        <button onclick="simulateCapture()" class="m-btn ghost">🖼️ Gallery</button>
+      </div>
+      <div id="pod-submit-wrap" style="display:none">
+        <button onclick="submitPOD()" class="m-btn green">✓ Submit POD Photo</button>
+      </div>
+    </div>
+  `);
+}
+
+function simulateCapture() {
+  const preview = document.getElementById('photo-preview');
+  if (!preview) return;
+  preview.style.border = '2px solid var(--green)';
+  preview.style.background = 'var(--green-l)';
+  preview.innerHTML = `<div style="text-align:center"><div style="font-size:50px">✅</div><div style="font-size:13px;font-weight:700;color:var(--green);margin-top:8px">Photo Captured!</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Tap to retake</div></div>`;
+  const wrap = document.getElementById('pod-submit-wrap');
+  if (wrap) wrap.style.display = 'block';
+}
+
+function submitPOD() {
+  closeModal();
+  showToast('📷 POD photo submitted successfully');
+}
+
+// ═══════════════════════════════════════════════════
+// SMS
+// ═══════════════════════════════════════════════════
+function openSMSUI(name, phone) {
+  const templates = [
+    `Hi! Your LBC package is on the way. ETA ~12 min. Please be ready to receive. 📦`,
+    `Good day! I am your LBC rider. I will arrive shortly. COD amount ready please!`,
+    `Hi, I'm at your gate. Please open or leave instructions for your package. 🏍`
+  ];
+  showModal(`
+    <div>
+      <div class="m-title">💬 Send SMS</div>
+      <div class="m-sub">To: <strong>${name}</strong> · ${phone}</div>
+      <div class="m-section">Quick Templates</div>
+      ${templates.map((t,i) => `
+        <div class="m-option" id="sms-tmpl-${i}" onclick="selectSMSTemplate(${i},this)">${t}</div>
+      `).join('')}
+      <div class="m-section">Custom Message</div>
+      <textarea id="sms-text" placeholder="Type your message…" style="width:100%;border:1.5px solid var(--border);border-radius:12px;padding:11px 14px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;color:var(--text);resize:none;height:80px;margin-bottom:12px;"></textarea>
+      <button onclick="sendSMS('${name}')" class="m-btn red">📤 Send SMS</button>
+    </div>
+  `);
+}
+
+function selectSMSTemplate(idx, el) {
+  document.querySelectorAll('.m-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  const textarea = document.getElementById('sms-text');
+  if (textarea) textarea.value = el.textContent.trim();
+}
+
+function sendSMS(name) {
+  const msg = (document.getElementById('sms-text') || {}).value || '';
+  if (!msg.trim()) { showToast('⚠️ Please write a message first'); return; }
+  showModal(`
+    <div style="text-align:center;padding:16px 0">
+      <div style="font-size:52px;margin-bottom:12px">📱</div>
+      <div class="m-title" style="margin-bottom:6px">SMS Sent!</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5">Message delivered to <strong>${name}</strong></div>
+      <div style="background:var(--bg);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--text);text-align:left;margin-bottom:16px;font-style:italic">"${msg.trim()}"</div>
+      <button onclick="closeModal()" class="m-btn ghost">Done</button>
+    </div>
+  `);
+}
+
+// ═══════════════════════════════════════════════════
+// FAILED DELIVERY
+// ═══════════════════════════════════════════════════
+function openFailedUI() {
+  const reasons = [
+    'Recipient not home',
+    'Refused delivery',
+    'Wrong address / cannot locate',
+    'Access restricted (gated community)',
+    'COD amount not ready',
+    'Recipient requested reschedule'
+  ];
+  showModal(`
+    <div>
+      <div class="m-title">❌ Failed Delivery</div>
+      <div class="m-sub">Select reason for the failed delivery attempt</div>
+      <div id="failed-options">
+        ${reasons.map((r,i) => `
+          <label style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;margin-bottom:6px;transition:all .15s;">
+            <input type="radio" name="failed-reason" value="${i}" style="accent-color:var(--red);width:16px;height:16px;flex-shrink:0">
+            <span style="font-size:12px;font-weight:600;color:var(--text)">${r}</span>
+          </label>
+        `).join('')}
+      </div>
+      <div class="m-section">Additional Notes</div>
+      <textarea placeholder="Optional details…" id="failed-notes" style="width:100%;border:1.5px solid var(--border);border-radius:12px;padding:11px 14px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;color:var(--text);resize:none;height:70px;margin-bottom:12px;"></textarea>
+      <button onclick="submitFailed()" class="m-btn red">Submit Failed Attempt</button>
+    </div>
+  `);
+}
+
+function submitFailed() {
+  const sel = document.querySelector('input[name="failed-reason"]:checked');
+  if (!sel) {
+    document.getElementById('failed-options').style.outline = '2px solid var(--red)';
+    document.getElementById('failed-options').style.borderRadius = '10px';
+    showToast('⚠️ Please select a reason');
+    return;
+  }
+  const reasons = ['Not home','Refused','Wrong address','Access restricted','COD not ready','Reschedule requested'];
+  showModal(`
+    <div style="text-align:center;padding:16px 0">
+      <div style="font-size:52px;margin-bottom:12px">📋</div>
+      <div class="m-title" style="margin-bottom:6px">Failed Attempt Logged</div>
+      <div style="background:var(--red-l);border-radius:10px;padding:10px 14px;margin:10px 0 16px;text-align:left;">
+        <div style="font-size:10px;color:var(--red);font-weight:800;margin-bottom:3px">REASON</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${reasons[parseInt(sel.value)] || 'Other'}</div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5">Package will be returned to hub or rescheduled per LBC policy.</div>
+      <button onclick="closeModal()" class="m-btn ghost">Done</button>
+    </div>
+  `);
+}
+
+// ═══════════════════════════════════════════════════
+// RESCHEDULE
+// ═══════════════════════════════════════════════════
+let reschedDate = '', reschedSlot = '';
+
+function openRescheduleUI() {
+  const days  = ['Thu, May 22','Fri, May 23','Sat, May 24','Mon, May 26'];
+  const slots = ['8:00 AM – 12:00 PM','12:00 PM – 3:00 PM','3:00 PM – 6:00 PM'];
+  reschedDate = ''; reschedSlot = '';
+
+  showModal(`
+    <div>
+      <div class="m-title">📅 Reschedule Delivery</div>
+      <div class="m-sub">Choose a new delivery date and time window</div>
+      <div class="m-section">Select Date</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:4px;">
+        ${days.map(d => `
+          <div onclick="selectReschedDate(this,'${d}')" style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;color:var(--text);transition:all .15s">${d}</div>
+        `).join('')}
+      </div>
+      <div class="m-section">Time Slot</div>
+      ${slots.map(s => `
+        <div onclick="selectReschedSlot(this,'${s}')" style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:7px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s"><span>🕐</span>${s}</div>
+      `).join('')}
+      <button onclick="submitReschedule()" class="m-btn ai" style="margin-top:6px">✓ Confirm Reschedule</button>
+    </div>
+  `);
+}
+
+function selectReschedDate(el, d) {
+  document.querySelectorAll('#modal-content [onclick^="selectReschedDate"]').forEach(e => {
+    e.style.borderColor = 'var(--border)'; e.style.background = 'var(--bg)'; e.style.color = 'var(--text)';
+  });
+  el.style.borderColor = 'var(--ai)'; el.style.background = 'var(--ai-l)'; el.style.color = 'var(--ai)';
+  reschedDate = d;
+}
+
+function selectReschedSlot(el, s) {
+  document.querySelectorAll('#modal-content [onclick^="selectReschedSlot"]').forEach(e => {
+    e.style.borderColor = 'var(--border)'; e.style.background = 'var(--bg)';
+  });
+  el.style.borderColor = 'var(--ai)'; el.style.background = 'var(--ai-l)';
+  reschedSlot = s;
+}
+
+function submitReschedule() {
+  if (!reschedDate || !reschedSlot) { showToast('⚠️ Pick a date and time slot'); return; }
+  showModal(`
+    <div style="text-align:center;padding:16px 0">
+      <div style="font-size:52px;margin-bottom:12px">📅</div>
+      <div class="m-title" style="margin-bottom:6px">Rescheduled!</div>
+      <div style="background:var(--ai-l);border-radius:12px;padding:12px 14px;margin:10px 0 16px;text-align:left;">
+        <div style="font-size:10px;font-weight:800;color:var(--ai);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">New Delivery Window</div>
+        <div style="font-size:16px;font-weight:800;color:var(--text)">${reschedDate}</div>
+        <div style="font-size:13px;color:var(--ai);font-weight:700;margin-top:2px">🕐 ${reschedSlot}</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:16px">Recipient will be notified via SMS</div>
+      <button onclick="closeModal()" class="m-btn ghost">Done</button>
+    </div>
+  `);
+}
+
+// ═══════════════════════════════════════════════════
+// FUEL BAR TOOLTIP
+// ═══════════════════════════════════════════════════
+function showDayFuel(day, val) {
+  const tooltip = document.getElementById('day-fuel-tooltip');
+  if (!tooltip) return;
+  tooltip.textContent = `${day}: ${val} saved`;
+  tooltip.style.display = 'block';
+  clearTimeout(tooltip._t);
+  tooltip._t = setTimeout(() => { tooltip.style.display = 'none'; }, 2500);
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL SYSTEM
+// ═══════════════════════════════════════════════════
+function showModal(html) {
+  const overlay = document.getElementById('modal-overlay');
+  const sheet   = document.getElementById('modal-sheet');
+  const content = document.getElementById('modal-content');
+  content.innerHTML = html;
+  overlay.classList.add('open');
+  requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open')));
+}
+
+function closeModal() {
+  const sheet = document.getElementById('modal-sheet');
+  sheet.classList.remove('open');
+  setTimeout(() => { document.getElementById('modal-overlay').classList.remove('open'); }, 320);
+}
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════════════════
+// ACCEPT AI ROUTE
+// ═══════════════════════════════════════════════════
+function acceptRoute(btn) {
+  const card = document.getElementById('ai-sugg-card');
+  card.style.background = 'var(--green-l)';
+  card.style.borderColor = 'rgba(15,127,74,.2)';
+  card.querySelector('.as-label').textContent = '✓ Route Accepted';
+  card.querySelector('.as-label').style.color = 'var(--green)';
+  card.querySelector('.as-body').textContent = 'Now routing via Bagong Barrio Ave. ₱23.94 saved. ETA improved by 14 min.';
+  card.querySelector('.as-actions').style.display = 'none';
+  showToast('✅ AI route accepted — ₱23.94 saved!');
+}
+
+// ═══════════════════════════════════════════════════
+// MAP ZOOM
+// ═══════════════════════════════════════════════════
+let zoomLevel = 1;
+function zoomMap(dir) {
+  zoomLevel = Math.min(Math.max(zoomLevel + dir * 0.3, 1), 3);
+  document.getElementById('map-canvas').style.transform = 'scale(' + zoomLevel + ')';
+}
+(function() {
+  const wrap = document.getElementById('map-wrap');
+  let sd = 0, sz = 1;
+  wrap.addEventListener('touchstart', e => {
+    if (e.touches.length===2){ sd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); sz=zoomLevel; }
+  },{passive:true});
+  wrap.addEventListener('touchmove', e => {
+    if (e.touches.length===2){ const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); zoomLevel=Math.min(Math.max(sz*(d/sd),1),3); document.getElementById('map-canvas').style.transform='scale('+zoomLevel+')'; }
+  },{passive:true});
+})();
+
+// ═══════════════════════════════════════════════════
+// LIVE TICKERS
+// ═══════════════════════════════════════════════════
+// Live clock
+(function tickClock() {
+  const now = new Date();
+  const el = document.getElementById('live-clock');
+  if (el) el.textContent = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  setTimeout(tickClock, 10000);
+})();
+
+// Fuel ticker
+let fuelVal = 94;
+setInterval(() => {
+  fuelVal = Math.min(fuelVal + (Math.random() > .65 ? 1 : 0), 999);
+  ['home-fuel-saved','route-fuel-val'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent='₱'+fuelVal; });
+  const m = document.getElementById('map-saved');   if (m) m.textContent = '₱'+fuelVal+'.62';
+  const h = document.getElementById('fuel-hero-val'); if (h) h.textContent = '₱'+fuelVal+'.62';
+}, 3500);
+
+// Sync time
+let syncMins = 2;
+setInterval(() => {
+  syncMins++;
+  const el = document.getElementById('sync-time');
+  if (el) el.textContent = syncMins + ' min ago';
+}, 60000);
+</script>
+</body>
+</html>
